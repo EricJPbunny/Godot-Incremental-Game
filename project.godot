@@ -10,10 +10,15 @@ config_version=5
 
 [application]
 
-config/name="Nuevo Proyecto de Juego"
-run/main_scene="uid://bwrqcig1axs15"
+config/name="BaseUI"
+run/main_scene="uid://c22qx13g4qgwl"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=800
 
 [rendering]
 

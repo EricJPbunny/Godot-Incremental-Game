@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://c22qx13g4qgwl"]
+
+[ext_resource type="Script" uid="uid://c2wj6ty6i5dtw" path="res://Mainnu.gd" id="1_y38sv"]
+[ext_resource type="Script" uid="uid://cnq4muyxad21p" path="res://WorkButton.gd" id="2_06tve"]
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource("1_y38sv")
+
+[node name="ButtonWork" type="Button" parent="." node_paths=PackedStringArray("main_node")]
+offset_left = 641.0
+offset_top = 385.0
+offset_right = 947.0
+offset_bottom = 439.0
+text = "Work
+\"Excess calories converted into action\""
+script = ExtResource("2_06tve")
+main_node = NodePath("..")
