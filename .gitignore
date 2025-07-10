@@ -1,14 +1,13 @@
 # Godot-specific files
 .import/
 .export/
-godot/    # If you use a custom build folder
+godot/
 
 # OS or editor files
 .DS_Store
 Thumbs.db
 *.tmp
 
-# Compiled or built files
 *.exe
 *.dll
 *.console.exe
@@ -22,17 +21,11 @@ Thumbs.db
 # Exported builds
 /build/
 
-# Godot export templates (optional, if you have them locally)
 export_presets.cfg
 
-# VSCode or other IDE settings (optional)
 .vscode/
-
-# macOS metadata files
-*.DS_Store
 
 # Windows metadata files
 Desktop.ini
 
-# Logs
 *.log
