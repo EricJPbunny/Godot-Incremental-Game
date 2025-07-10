@@ -5,7 +5,7 @@ var shop: Shop
 var auto_timer: Timer
 
 var resources = {
-	"effort":0,
+	"effort":299,
 	"manpower": 0,
 	"think": 0,
 	"materials": 0,
@@ -18,14 +18,16 @@ var effort_press_bonus := 0                # Additive bonuses or prestige bonuse
 var manpower_strength = 1
 var fire_unlocked = false
 var active_configs = []
+var autoclick_enabled := false
 
 var shop_configs = {
 	"manpower": {
 		"cost_key": "effort",
-		"cost_amount": 20,
+		"cost_amount": 8,         # Reduced from 20
 		"reward_key": "manpower",
 		"reward_amount": 1,
-		"cost_scale": 1.1,
+		"cost_scale": 1.15,     # TODO: needs tweaking
+		"scaling_type": "exponential", #TODO: figure out better approach
 		"button_label": "Manpower",
 		"age": "Stone Age"
 	},
@@ -36,6 +38,17 @@ var shop_configs = {
 		"reward_amount": 1,
 		"cost_scale": 1.2,
 		"button_label": "Thinkers",
+		"age": "Stone Age"
+	},
+		"fire":{
+		"cost_key": "effort",
+		"cost_amount": 100,
+		"cost_scale": 1.75,
+		"effect": "increase_click_bonus",
+		"bonus_amount": 1,
+		"button_label": "Fire Upgrade",
+		"unlock_key": "effort",
+		"unlock_amount": 50,
 		"age": "Stone Age"
 	},
 	"stone_tools": {
@@ -49,15 +62,14 @@ var shop_configs = {
 		"unlock_amount": 100,
 		"age": "Stone Age"
 	},
-	"fire":{
+		"basic_automation":{
 		"cost_key": "effort",
-		"cost_amount": 100,
-		"cost_scale": 1.75,
-		"effect": "increase_click_bonus",
-		"bonus_amount": 1,
-		"button_label": "Fire Upgrade",
+		"cost_amount": 300,
+		"cost_scale": 2.0,
+		"effect": "enable_autoclick",
+		"button_label": "Structured Delegation",
 		"unlock_key": "effort",
-		"unlock_amount": 50,
+		"unlock_amount": 200,
 		"age": "Stone Age"
 	}
 }
@@ -65,7 +77,7 @@ var shop_configs = {
 var resource_labels = {}
 
 func update_age(new_age: String):
-	var active_configs = []
+	active_configs.clear()
 	
 	for key in shop_configs.keys():
 		var config = shop_configs[key]
@@ -82,7 +94,8 @@ func update_all_labels() -> void:
 		resource_labels[key].text = "[b]" + key.capitalize() + ":[/b] " + str(resources[key])
 
 func _on_auto_timer_timeout() -> void:
-	resources["effort"] += manpower_strength * resources["manpower"]
+	if resources["manpower"] > 0:
+		resources["effort"] += manpower_strength * resources["manpower"]
 	
 func get_current_click_power() -> int:
 	return int((effort_press_strength_base + effort_press_bonus) * effort_press_multiplier)
@@ -124,9 +137,11 @@ func _ready() -> void:
 	
 	#Producer timers
 	auto_timer = Timer.new()
-	auto_timer.wait_time = 3.0
+	auto_timer.wait_time = 0.5    #TODO: stop hardcoding in, needs scaling capabilities
 	auto_timer.one_shot = false
 	auto_timer.autostart = false
+	auto_timer.stop()
+	print("On ready, is timer stopped? ", auto_timer.is_stopped())
 	add_child(auto_timer)
 	auto_timer.timeout.connect(_on_auto_timer_timeout)
 	

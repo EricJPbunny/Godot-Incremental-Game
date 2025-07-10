@@ -14,6 +14,7 @@ func _init(p_main_node = null):
 
 
 func add_button(button: Button, config: Dictionary):
+	#TODO: This needs modularity, monster code ahead
 	
 	buttons.append(button)
 	add_child(button)
@@ -32,6 +33,8 @@ func add_button(button: Button, config: Dictionary):
 		var reward_amount = config.get("reward_amount", 0)
 		var cost_scale = config.get("cost_scale", 1.0)
 		
+		
+		
 		if main_node != null:
 			
 			if main_node.resources[cost_key] >=cost_amount:
@@ -43,16 +46,22 @@ func add_button(button: Button, config: Dictionary):
 					main_node.resources[reward_key] += reward_amount
 					print("New cost for ", reward_key, ": ", config["cost_amount"])
 				# Scale cost for next purchase
-				config["cost_amount"] = int(cost_amount * cost_scale)
+				var new_cost = cost_amount
+				if config.has("scaling_type"):
+					match config["scaling_type"]:
+						"exponential":
+							new_cost = int(cost_amount * cost_scale)
+						"logarithmic":
+							new_cost = int(cost_amount + log(cost_amount + 1) * 5)
+				else:
+					new_cost = int(cost_amount * cost_scale)
+				config["cost_amount"] = new_cost
 				print("New cost for ", reward_key, ": ", config["cost_amount"])
 				
 				if reward_key == "manpower":
 					main_node.resource_labels["manpower"].visible = true
-		
-				if not main_node.auto_timer.is_stopped():
-					pass
-				else:
-					main_node.auto_timer.start()
+					if main_node.auto_timer.is_stopped():
+						main_node.auto_timer.start()
 			else:
 				print("Not enough ", cost_key, " to buy!")
 				return
@@ -65,6 +74,10 @@ func add_button(button: Button, config: Dictionary):
 						main_node.fire_unlocked = true
 				# Flag: can be used for future UI or tech tree unlock checks
 						button.disabled = true
+					"enable_autoclick":
+						main_node.autoclick_enabled = true
+						print("Autoclick feature enabled!")
+						button.disabled = true
 		)
 
 func update_buttons(config_list: Array):
@@ -74,7 +87,7 @@ func update_buttons(config_list: Array):
 		if not button_dict.has(key):
 			var b = Button.new()
 			b.text = "Buy " + config.get("button_label", "Upgrade")
-			var local_config = config.duplicate() #annoying ass bug, can't figure out why godot is passing a reference here
+			var local_config = config.duplicate() #prevent shared reference issues
 			add_button(b, local_config)
 			button_dict[key] = {
 				"button": b,
@@ -116,5 +129,6 @@ func _ready() -> void:
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
+@warning_ignore("unused_parameter")
 func _process(delta: float) -> void:
 	pass
