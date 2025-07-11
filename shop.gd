@@ -20,7 +20,9 @@ func add_button(button: Button, config: Dictionary):
 	add_child(button)
 	button.visible = false
 	button.size = Vector2(180, 30)
-	
+	if config.has("cooldown_time") and button.has_method("set_cooldown_time"):
+		button.set_cooldown_time(config["cooldown_time"])
+
 	
 	button.pressed.connect(func():
 		
@@ -78,6 +80,7 @@ func add_button(button: Button, config: Dictionary):
 						main_node.autoclick_enabled = true
 						print("Autoclick feature enabled!")
 						button.disabled = true
+
 		)
 
 func update_buttons(config_list: Array):

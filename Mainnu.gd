@@ -29,6 +29,7 @@ var shop_configs = {
 		"cost_scale": 1.15,     # TODO: needs tweaking
 		"scaling_type": "exponential", #TODO: figure out better approach
 		"button_label": "Manpower",
+		"cooldown_time": 0.5,
 		"age": "Stone Age"
 	},
 	"thinkers": {
