@@ -1,29 +1,31 @@
-# Godot-specific
-.godot/
+# Godot-specific files
 .import/
-export.cfg
-export_presets.cfg
+.export/
+godot/
 
-# Godot binaries
-*.exe
-*.dll
-*.pck
-*.apk
-*.zip
-
-# OS generated
+# OS or editor files
 .DS_Store
 Thumbs.db
+*.tmp
 
-# Logs
-*.log
+*.exe
+*.dll
+*.console.exe
+*.pck
+*.apk
+*.xcodeproj
+*.sln
+*.user
+*.suo
 
-# Python 
-__pycache__/
-*.pyc
+# Exported builds
+/build/
 
-# VSCode
+export_presets.cfg
+
 .vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
+
+# Windows metadata files
+Desktop.ini
+
+*.log
