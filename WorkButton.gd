@@ -86,7 +86,14 @@ func _ready():
 	add_child(cooldown_bar)
 
 func _process(delta: float) -> void:
-	if click_cooldown_timer.is_stopped():
-		cooldown_bar.value = 0
-	else:
+	
+	# If holding (autoclick) and button is pressed
+	if main_node.autoclick_enabled and is_pressed() and not hold_timer.is_stopped():
+		cooldown_bar.max_value = hold_timer.wait_time
+		cooldown_bar.value = hold_timer.wait_time - hold_timer.time_left
+		# Else, show manual click cooldown
+	elif not click_cooldown_timer.is_stopped():
+		cooldown_bar.max_value = click_cooldown_timer.wait_time
 		cooldown_bar.value = click_cooldown_timer.wait_time - click_cooldown_timer.time_left
+	else:
+		cooldown_bar.value = 0
