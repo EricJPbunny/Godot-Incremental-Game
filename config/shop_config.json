@@ -1,0 +1,54 @@
+{
+	"manpower": {
+		"cost_key": "effort",
+		"cost_amount": 8,
+		"reward_key": "manpower",
+		"reward_amount": 1,
+		"cost_scale": 1.15,
+		"scaling_type": "exponential",
+		"button_label": "Manpower",
+		"cooldown_time": 0.5,
+		"age": "Stone Age"
+	},
+	"thinkers": {
+		"cost_key": "effort",
+		"cost_amount": 45,
+		"reward_key": "think",
+		"reward_amount": 1,
+		"cost_scale": 1.2,
+		"button_label": "Thinkers",
+		"age": "Stone Age"
+	},
+		"fire":{
+		"cost_key": "effort",
+		"cost_amount": 100,
+		"cost_scale": 1.75,
+		"effect": "increase_click_bonus",
+		"bonus_amount": 1,
+		"button_label": "Fire Upgrade",
+		"unlock_key": "effort",
+		"unlock_amount": 50,
+		"age": "Stone Age"
+	},
+	"stone_tools": {
+		"cost_key": "effort",
+		"cost_amount": 250,
+		"cost_scale": 1.5,
+		"effect": "increase_click_bonus",
+		"bonus_amount": 1,
+		"button_label": "Stone Tools",
+		"unlock_key": "effort",
+		"unlock_amount": 100,
+		"age": "Stone Age"
+	},
+		"basic_automation":{
+		"cost_key": "effort",
+		"cost_amount": 300,
+		"cost_scale": 2.0,
+		"effect": "enable_autoclick",
+		"button_label": "Structured Delegation",
+		"unlock_key": "effort",
+		"unlock_amount": 200,
+		"age": "Stone Age"
+	}
+}

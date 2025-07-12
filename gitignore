@@ -1,0 +1,31 @@
+# Godot-specific files
+.import/
+.export/
+godot/
+
+# OS or editor files
+.DS_Store
+Thumbs.db
+*.tmp
+
+*.exe
+*.dll
+*.console.exe
+*.pck
+*.apk
+*.xcodeproj
+*.sln
+*.user
+*.suo
+
+# Exported builds
+/build/
+
+export_presets.cfg
+
+.vscode/
+
+# Windows metadata files
+Desktop.ini
+
+*.log

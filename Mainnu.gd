@@ -20,60 +20,7 @@ var fire_unlocked = false
 var active_configs = []
 var autoclick_enabled := false
 
-var shop_configs = {
-	"manpower": {
-		"cost_key": "effort",
-		"cost_amount": 8,         # Reduced from 20
-		"reward_key": "manpower",
-		"reward_amount": 1,
-		"cost_scale": 1.15,     # TODO: needs tweaking
-		"scaling_type": "exponential", #TODO: figure out better approach
-		"button_label": "Manpower",
-		"cooldown_time": 0.5,
-		"age": "Stone Age"
-	},
-	"thinkers": {
-		"cost_key": "effort",
-		"cost_amount": 45,
-		"reward_key": "think",
-		"reward_amount": 1,
-		"cost_scale": 1.2,
-		"button_label": "Thinkers",
-		"age": "Stone Age"
-	},
-		"fire":{
-		"cost_key": "effort",
-		"cost_amount": 100,
-		"cost_scale": 1.75,
-		"effect": "increase_click_bonus",
-		"bonus_amount": 1,
-		"button_label": "Fire Upgrade",
-		"unlock_key": "effort",
-		"unlock_amount": 50,
-		"age": "Stone Age"
-	},
-	"stone_tools": {
-		"cost_key": "effort",
-		"cost_amount": 250,
-		"cost_scale": 1.5,
-		"effect": "increase_click_bonus",
-		"bonus_amount": 1,
-		"button_label": "Stone Tools",
-		"unlock_key": "effort",
-		"unlock_amount": 100,
-		"age": "Stone Age"
-	},
-		"basic_automation":{
-		"cost_key": "effort",
-		"cost_amount": 300,
-		"cost_scale": 2.0,
-		"effect": "enable_autoclick",
-		"button_label": "Structured Delegation",
-		"unlock_key": "effort",
-		"unlock_amount": 200,
-		"age": "Stone Age"
-	}
-}
+var shop_configs = {} #Loads from JSON file
 
 var resource_labels = {}
 
@@ -115,6 +62,20 @@ func check_unlocks():
 					active_configs.append(config)
 	shop.update_buttons(active_configs)
 
+func sanitize_json_numbers(data):
+	if typeof(data) == TYPE_DICTIONARY:
+		for key in data.keys():
+			data[key] = sanitize_json_numbers(data[key])
+		return data
+	elif typeof(data) == TYPE_ARRAY:
+		for i in range(data.size()):
+			data[i] = sanitize_json_numbers(data[i])
+		return data
+	elif typeof(data) == TYPE_FLOAT and int(data) == data:
+		return int(data)
+	else:
+		return data
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	
@@ -127,6 +88,16 @@ func _ready() -> void:
 	var spacing_y = 0
 	var i = 0
 	#--------------------------------------------------------------------------
+	#Loading configs from JSON files
+	#--------------------------------------------------------------------------
+	var file = FileAccess.open("res://config/shop_config.json", FileAccess.READ)
+	var data = file.get_as_text()
+	var json = JSON.parse_string(data)
+	if json != null:
+		shop_configs = sanitize_json_numbers(json)
+	else:
+		print("Error parsing JSON")
+	file.close()
 	#--------------------------------------------------------------------------
 	#Class variables are created and initialized here
 	#--------------------------------------------------------------------------
