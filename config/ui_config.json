@@ -1,12 +1,18 @@
 {
 	"global_ui": {
-		"button_spacing_x": 200,
+		"button_spacing_x": 50,
 		"button_spacing_y": 0,
 		"start_x": 50,
-		"start_y": 100,
+		"start_y": 600,
 		"default_button_width": 180,
 		"default_button_height": 30,
 		"default_button_color": "#8FBC8F"
+	},
+	"resource_labels_ui": {
+		"start_x": 50,
+		"start_y": 50,
+		"spacing_x": 200,
+		"spacing_y": 0
 	},
 	"work_button": {
 		"button_width": 240,
@@ -34,7 +40,11 @@
 				"reward_key": "think",
 				"reward_amount": 1,
 				"cost_scale": 1.2,
-				"button_label": "Thinkers"
+				"button_label": "Thinkers",
+				"cooldown_time": 0.5,
+				"button_width": 220,
+				"button_height": 60,
+				"button_color": "#197278"
 			},
 			"fire": {
 				"cost_key": "effort",
@@ -44,7 +54,11 @@
 				"bonus_amount": 1,
 				"button_label": "Fire Upgrade",
 				"unlock_key": "effort",
-				"unlock_amount": 50
+				"unlock_amount": 50,
+				"cooldown_time": 0.5,
+				"button_width": 220,
+				"button_height": 60,
+				"button_color": "#C44536"
 			},
 			"stone_tools": {
 				"cost_key": "effort",
@@ -54,7 +68,11 @@
 				"bonus_amount": 1,
 				"button_label": "Stone Tools",
 				"unlock_key": "effort",
-				"unlock_amount": 100
+				"unlock_amount": 100,
+				"cooldown_time": 0.5,
+				"button_width": 220,
+				"button_height": 60,
+				"button_color": "#283D3B"
 			},
 			"basic_automation": {
 				"cost_key": "effort",
@@ -63,7 +81,11 @@
 				"effect": "enable_autoclick",
 				"button_label": "Structured Delegation",
 				"unlock_key": "effort",
-				"unlock_amount": 200
+				"unlock_amount": 200,
+				"cooldown_time": 0.5,
+				"button_width": 220,
+				"button_height": 60,
+				"button_color": "#0091AD"
 			}
 		}
 	}

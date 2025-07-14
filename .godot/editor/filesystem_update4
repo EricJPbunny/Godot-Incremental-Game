@@ -1,3 +1,6 @@
 res://label.tscn
 res://Mainnu.gd
+res://shop.gd
+res://config/shop_config.json
 res://WorkButton.gd
+res://config/ui_config.json

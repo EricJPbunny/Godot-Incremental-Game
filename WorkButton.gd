@@ -8,6 +8,27 @@ var hold_timer: Timer
 var click_cooldown_timer: Timer
 var can_click := true
 
+func setup_from_config(config: Dictionary):
+	# Set size
+	if config.has("button_width") and config.has("button_height"):
+		custom_minimum_size = Vector2(config["button_width"], config["button_height"])
+
+	# Set color
+	if config.has("button_color"):
+		var stylebox = StyleBoxFlat.new()
+		stylebox.bg_color = Color(config["button_color"])
+
+		var new_theme = Theme.new()
+		new_theme.set_stylebox("normal", "Button", stylebox)
+		new_theme.set_stylebox("hover", "Button", stylebox)
+		new_theme.set_stylebox("pressed", "Button", stylebox)
+
+		self.theme = new_theme
+
+	# Set cooldown
+	if config.has("cooldown_time"):
+		set_cooldown_time(config["cooldown_time"])
+
 func _click_once():
 	if main_node:
 		main_node.resources["effort"] += main_node.get_current_click_power()
