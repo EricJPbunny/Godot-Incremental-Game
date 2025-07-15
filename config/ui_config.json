@@ -8,6 +8,11 @@
 		"default_button_height": 30,
 		"default_button_color": "#8FBC8F"
 	},
+	"Stone Age_ui": {
+	"button_spacing_x": 70,
+	"start_x": 50,
+	"start_y": 600
+	},
 	"resource_labels_ui": {
 		"start_x": 50,
 		"start_y": 50,

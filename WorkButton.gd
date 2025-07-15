@@ -34,6 +34,7 @@ func _click_once():
 		main_node.resources["effort"] += main_node.get_current_click_power()
 		print("Work pressed! Current effort:", main_node.resources["effort"])
 		main_node.check_unlocks()
+		main_node.total_clicks += 1
 	else:
 		print("Click ignored: no main_node")
 

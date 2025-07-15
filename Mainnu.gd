@@ -10,9 +10,12 @@ var resources = {
 	"materials": 0,
 }
 
+var total_clicks := 0
+var effort_income_per_second := 0.0
 var effort_press_strength_base := 1
 var effort_press_multiplier := 1.0
 var effort_press_bonus := 0
+var auto_interval := 2.0  # The value that can later be updated by upgrades
 
 var manpower_strength = 1
 var fire_unlocked = false
@@ -39,7 +42,11 @@ func update_age(new_age: String):
 
 func update_all_labels() -> void:
 	for key in resources.keys():
-		resource_labels[key].text = "[b]" + key.capitalize() + ":[/b] " + str(resources[key])
+		if key == "effort":
+			var effort_str = "%.2f" % effort_income_per_second
+			resource_labels[key].text = "[b]" + key.capitalize() + ":[/b] " + str(resources[key]) + " (+" + effort_str + "/s)"
+		else:
+			resource_labels[key].text = "[b]" + key.capitalize() + ":[/b] " + str(resources[key])
 
 func _on_auto_timer_timeout() -> void:
 	if resources["manpower"] > 0:
@@ -128,7 +135,7 @@ func _ready() -> void:
 	move_child(bg, 0)
 
 	auto_timer = Timer.new()
-	auto_timer.wait_time = 0.5
+	auto_timer.wait_time = auto_interval
 	auto_timer.one_shot = false
 	auto_timer.autostart = false
 	auto_timer.stop()
@@ -163,8 +170,16 @@ func _ready() -> void:
 		add_child(label)
 		resource_labels[key] = label
 		i += 1
+	var click_label = RichTextLabel.new()
+	click_label.bbcode_enabled = true
+	click_label.text = "[b]Total Clicks:[/b] 0"
+	click_label.size = Vector2(250, 30)
+	click_label.position = Vector2(label_start_x, label_start_y + 50 + i * label_spacing_y + 40) # offset below resources
+	add_child(click_label)
+	resource_labels["total_clicks"] = click_label
 
 
 
 func _process(delta: float) -> void:
+	effort_income_per_second = float(manpower_strength * resources["manpower"] * (1.0/auto_interval))
 	update_all_labels()

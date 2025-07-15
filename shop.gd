@@ -12,6 +12,14 @@ var main_node
 func _init(p_main_node = null):
 	main_node = p_main_node
 
+func add_hover_tooltip(button: Button, config: Dictionary):
+	var tooltip_text = "Cost: " + str(config.get("cost_amount", 0)) + " " + config.get("cost_key", "")
+	if config.has("reward_key"):
+		tooltip_text += "\nReward: +" + str(config.get("reward_amount", 0)) + " " + config.get("reward_key", "")
+	if config.has("effect"):
+		tooltip_text += "\nEffect: " + str(config["effect"])
+
+	button.tooltip_text = tooltip_text
 
 func add_button(button: Button, config: Dictionary):
 	# Add button to internal list and scene
@@ -27,6 +35,7 @@ func add_button(button: Button, config: Dictionary):
 	# Connect press signal to external handler
 	button.pressed.connect(func(): handle_button_press(config, button))
 	apply_button_style(button, config) # Calls the styling of button when in config
+	add_hover_tooltip(button, config)
 	
 func apply_button_style(button: Button, config: Dictionary):
 	if config.has("button_width") and config.has("button_height"):
@@ -74,6 +83,11 @@ func handle_button_press(config: Dictionary, button: Button):
 			new_cost = int(cost_amount * cost_scale)
 		config["cost_amount"] = new_cost
 		print("New cost for ", reward_key, ": ", config["cost_amount"])
+		# Update button text to show new cost
+		if button != null:
+			var raw_name = config.get("button_label", "Upgrade")
+			var nice_name = raw_name.capitalize().replace("_", " ")
+			button.text = "Buy %s (%d)" % [nice_name, new_cost]
 
 		# Special handling for manpower
 		if reward_key == "manpower":
@@ -104,7 +118,9 @@ func update_buttons(config_list: Array):
 		var key = config.get("button_label", "unknown")
 		if not button_dict.has(key):
 			var b = Button.new()
-			b.text = "Buy " + config.get("button_label", "Upgrade")
+			var raw_name = config.get("button_label", "Upgrade")
+			var nice_name = raw_name.capitalize().replace("_", " ")
+			b.text = "Buy " + nice_name
 			var local_config = config.duplicate() #prevent shared reference issues
 			add_button(b, local_config)
 			button_dict[key] = {
@@ -134,6 +150,14 @@ func position_buttons():
 		start_x = main_node.ui_config["global_ui"].get("start_x", 50)
 		start_y = main_node.ui_config["global_ui"].get("start_y", ProjectSettings.get_setting("display/window/size/viewport_height") - 150)
 		spacing_x = main_node.ui_config["global_ui"].get("button_spacing_x", 20)
+
+	# Per-age overrides
+	var age_key = current_age + "_ui"
+	if main_node.ui_config.has(age_key):
+		var age_conf = main_node.ui_config[age_key]
+		start_x = age_conf.get("start_x", start_x)
+		start_y = age_conf.get("start_y", start_y)
+		spacing_x = age_conf.get("button_spacing_x", spacing_x)
 
 	var current_x = start_x
 
