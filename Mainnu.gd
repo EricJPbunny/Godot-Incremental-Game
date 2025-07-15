@@ -15,7 +15,7 @@ var effort_income_per_second := 0.0
 var effort_press_strength_base := 1
 var effort_press_multiplier := 1.0
 var effort_press_bonus := 0
-var auto_interval := 2.0  # The value that can later be updated by upgrades
+var auto_interval := 3.0  # The value that can later be updated by upgrades
 
 var manpower_strength = 1
 var fire_unlocked = false
@@ -47,6 +47,8 @@ func update_all_labels() -> void:
 			resource_labels[key].text = "[b]" + key.capitalize() + ":[/b] " + str(resources[key]) + " (+" + effort_str + "/s)"
 		else:
 			resource_labels[key].text = "[b]" + key.capitalize() + ":[/b] " + str(resources[key])
+	# Finally, update total clicks label
+	resource_labels["total_clicks"].text = "[b]Total Clicks:[/b] " + str(total_clicks)
 
 func _on_auto_timer_timeout() -> void:
 	if resources["manpower"] > 0:
