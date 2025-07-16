@@ -15,12 +15,13 @@ var effort_income_per_second := 0.0
 var effort_press_strength_base := 1
 var effort_press_multiplier := 1.0
 var effort_press_bonus := 0
-var auto_interval := 3.0  # The value that can later be updated by upgrades
+var auto_interval := 0.2  # The value that can later be updated by upgrades
 
 var manpower_strength = 1
 var fire_unlocked = false
 var active_configs = []
 var autoclick_enabled := false
+var current_age := "Stone Age"
 
 var shop_configs = {}
 var ui_config = {}
@@ -30,15 +31,27 @@ func update_age(new_age: String):
 	active_configs.clear()
 
 	if shop_configs.has(new_age):
+		# Don't re-fetch base config; reuse current ones in shop.button_dict
+		if shop.current_age != new_age:
+			shop.clear_buttons() # Clear old buttons only on actual age change
+
 		var age_configs = shop_configs[new_age]
 		for key in age_configs.keys():
 			var config = age_configs[key]
-			if config.has("unlock_effort"):
-				if resources["effort"] >= config["unlock_effort"]:
+			if config.has("unlock_key") and config.has("unlock_amount"):
+				if resources[config["unlock_key"]] >= config["unlock_amount"]:
 					active_configs.append(config)
 			else:
 				active_configs.append(config)
+
+		# Only call update_buttons if the age has changed or new unlocks appeared
 		shop.update_buttons(active_configs)
+
+func advance_to_next_age(new_age: String):
+	print("Advancing to:", new_age)
+	current_age = new_age
+	shop.transition_to_age(new_age)  # Tell Shop to clear previous buttons
+	update_age(new_age)
 
 func update_all_labels() -> void:
 	for key in resources.keys():
@@ -58,8 +71,8 @@ func get_current_click_power() -> int:
 	return int((effort_press_strength_base + effort_press_bonus) * effort_press_multiplier)
 
 func check_unlocks():
-	if shop_configs.has("Stone Age"):
-		var age_configs = shop_configs["Stone Age"]
+	if shop_configs.has(current_age):
+		var age_configs = shop_configs[current_age]
 		for key in age_configs.keys():
 			var config = age_configs[key]
 			if config.has("unlock_key") and config.has("unlock_amount"):

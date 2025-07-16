@@ -9,9 +9,9 @@
 		"default_button_color": "#8FBC8F"
 	},
 	"Stone Age_ui": {
-	"button_spacing_x": 70,
-	"start_x": 50,
-	"start_y": 600
+		"button_spacing_x": 70,
+		"start_x": 50,
+		"start_y": 600
 	},
 	"resource_labels_ui": {
 		"start_x": 50,
@@ -91,6 +91,61 @@
 				"button_width": 220,
 				"button_height": 60,
 				"button_color": "#0091AD"
+			},
+			"advance_bronze_age": {
+				"button_label": "advance_bronze_age",
+				"cost_key": "effort",
+				"cost_amount": 1500,
+				"effect": "advance_age",
+				"advance_to_age": "Bronze Age",
+				"unlock_key": "effort",
+				"unlock_amount": 1000,
+				"button_color": "#c57b57",
+				"button_width": 220,
+				"button_height": 40
+				}
+		},
+		"Bronze Age": {
+			"bronze_smelting": {
+				"cost_key": "effort",
+				"cost_amount": 500,
+				"reward_key": "materials",
+				"reward_amount": 1,
+				"cost_scale": 1.3,
+				"button_label": "Bronze Smelting",
+				"cooldown_time": 0.5,
+				"button_width": 220,
+				"button_height": 60,
+				"button_color": "#CD7F32",
+				"unlock_key": "effort",
+				"unlock_amount": 500
+			},
+			"wheel": {
+				"cost_key": "effort",
+				"cost_amount": 800,
+				"reward_key": "think",
+				"reward_amount": 2,
+				"cost_scale": 1.4,
+				"button_label": "Wheel",
+				"cooldown_time": 0.5,
+				"button_width": 220,
+				"button_height": 60,
+				"button_color": "#8B4513",
+				"unlock_key": "effort",
+				"unlock_amount": 700
+			},
+			"bronze_weapons": {
+				"cost_key": "materials",
+				"cost_amount": 3,
+				"effect": "increase_click_bonus",
+				"bonus_amount": 2,
+				"button_label": "Bronze Weapons",
+				"cooldown_time": 0.5,
+				"button_width": 220,
+				"button_height": 60,
+				"button_color": "#A0522D",
+				"unlock_key": "materials",
+				"unlock_amount": 2
 			}
 		}
 	}
