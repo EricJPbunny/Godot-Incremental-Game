@@ -60,6 +60,7 @@
 				"button_label": "Fire Upgrade",
 				"unlock_key": "effort",
 				"unlock_amount": 50,
+				"one_time": true,
 				"cooldown_time": 0.5,
 				"button_width": 220,
 				"button_height": 60,
@@ -148,5 +149,13 @@
 				"unlock_amount": 2
 			}
 		}
+	},
+	"tech_tree_configs": [
+		{
+		"tech_label": "Unlock Fire",
+		"cost_key": "effort",
+		"cost ammount": 100,
+		"unlocks": "fire_upgrade"
 	}
+	]
 }

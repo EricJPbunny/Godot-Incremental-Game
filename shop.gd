@@ -59,31 +59,60 @@ func handle_button_press(config: Dictionary, button: Button):
 		print("Main node not found!")
 		return
 
-	if main_node.resources[cost_key] >= cost_amount:
-		main_node.resources[cost_key] -= cost_amount
-		if main_node.resources[cost_key] < 0:
-			main_node.resources[cost_key] = 0
+	var tech_label = config.get("button_label", null)
+	if tech_label and main_node.tech_tree:
+		var tech_state = main_node.tech_tree.tech_config_state.get(tech_label, {})
+		if tech_state.has("purchased") and tech_state["purchased"] == false:
+			print("Cannot purchase", tech_label, "- tech not unlocked yet.")
+			return
 
-		if reward_key != null:
+	if config.get("one_time", false) and config.get("purchased", false):
+		print("Already purchased one-time upgrade:", tech_label)
+		return
+
+	if main_node.resources.get(cost_key, 0) >= cost_amount:
+		main_node.resources[cost_key] -= cost_amount
+		if reward_key:
 			main_node.resources[reward_key] += reward_amount
 			print("Reward granted: ", reward_amount)
 
-		# --- Scaling cost ---
-		var new_cost = cost_amount
-		if config.has("scaling_type"):
-			match config["scaling_type"]:
-				"exponential":
-					new_cost = int(cost_amount * cost_scale)
-				"logarithmic":
-					new_cost = int(cost_amount + log(cost_amount + 1) * 5)
-		else:
-			new_cost = int(cost_amount * cost_scale)
+		# Apply effects
+		if config.has("effect"):
+			match config["effect"]:
+				"increase_click_bonus":
+					main_node.effort_press_bonus += config["bonus_amount"]
+					main_node.fire_unlocked = true
+					print("Click bonus increased by ", config["bonus_amount"])
+				"enable_autoclick":
+					main_node.autoclick_enabled = true
+					print("Autoclick feature enabled!")
+				"advance_age":
+					var target_age = config.get("advance_to_age", null)
+					if target_age != null:
+						main_node.advance_to_next_age(target_age)
 
-		config["cost_amount"] = new_cost
+		# Handle one-time upgrades
+		if config.get("one_time", false):
+			config["purchased"] = true
+			button.disabled = true
+			print("One-time upgrade purchased:", tech_label)
 
-		var raw_name = config.get("button_label", "Upgrade")
-		var nice_name = raw_name.capitalize().replace("_", " ")
-		button.text = "Buy %s (%d)" % [nice_name, new_cost]
+		# Update cost for next purchase if not one-time
+		if not config.get("one_time", false):
+			var new_cost = cost_amount
+			if config.has("scaling_type"):
+				match config["scaling_type"]:
+					"exponential":
+						new_cost = int(cost_amount * cost_scale)
+					"logarithmic":
+						new_cost = int(cost_amount + log(cost_amount + 1) * 5)
+			else:
+				new_cost = int(cost_amount * cost_scale)
+
+			config["cost_amount"] = new_cost
+			var raw_name = config.get("button_label", "Upgrade")
+			var nice_name = raw_name.capitalize().replace("_", " ")
+			button.text = "Buy %s (%d)" % [nice_name, new_cost]
 
 		if reward_key == "manpower":
 			main_node.resource_labels["manpower"].visible = true
@@ -93,31 +122,13 @@ func handle_button_press(config: Dictionary, button: Button):
 		print("Not enough ", cost_key, " to buy!")
 		return
 
-	# --- Special Effects ---
-	if config.has("effect"):
-		match config["effect"]:
-			"increase_click_bonus":
-				main_node.effort_press_bonus += config["bonus_amount"]
-				print("Click bonus increased by ", config["bonus_amount"])
-				main_node.fire_unlocked = true
-				button.disabled = true
-			"enable_autoclick":
-				main_node.autoclick_enabled = true
-				print("Autoclick feature enabled!")
-				button.disabled = true
-			"advance_age":
-				var target_age = config.get("advance_to_age", null)
-				if target_age != null:
-					main_node.advance_to_next_age(target_age)
-					button.disabled = true
-
 func update_buttons(config_list: Array):
 	if current_age != main_node.current_age:
-		return  # Don't update buttons from a different age!
+		return
+
 	for config in config_list:
 		var key = config.get("button_label", "unknown")
 
-		# Retrieve the mutated config or make a deep copy
 		var local_config: Dictionary
 		if button_config_state.has(key):
 			local_config = button_config_state[key]
@@ -125,12 +136,11 @@ func update_buttons(config_list: Array):
 			local_config = config.duplicate(true)
 			button_config_state[key] = local_config
 
-		# Create the button only if it doesn't exist
-		if not button_dict.has(key):
-			var b = Button.new()
+		var b: Button
 
-			# Set label ONLY when creating new button
-			var raw_name = config.get("button_label", "Upgrade")
+		if not button_dict.has(key):
+			b = Button.new()
+			var raw_name = local_config.get("button_label", "Upgrade")
 			var nice_name = raw_name.capitalize().replace("_", " ")
 			var cost = local_config.get("cost_amount", 0)
 			b.text = "Buy %s (%d)" % [nice_name, cost]
@@ -141,17 +151,49 @@ func update_buttons(config_list: Array):
 				"button": b,
 				"config": local_config,
 				"unlocked": false
-		}
+			}
 
-		if config.has("unlock_key") and config.has("unlock_amount"):
-			var unlock_key = config["unlock_key"]
-			var unlock_amount = config["unlock_amount"]
-			if main_node.resources[unlock_key] >= unlock_amount:
-				button_dict[key]["unlocked"] = true
-				button_dict[key]["button"].visible = true
 		else:
-			button_dict[key]["unlocked"] = true
-			button_dict[key]["button"].visible = true
+			b = button_dict[key]["button"]
+
+		var tech_locked := false
+		if main_node.tech_tree and main_node.tech_tree.tech_config_state.has(key):
+			if not main_node.tech_tree.tech_config_state[key].get("purchased", false):
+				b.disabled = true
+				tech_locked = true
+
+		if local_config.get("one_time", false) and local_config.get("purchased", false):
+			b.disabled = true
+			tech_locked = true
+
+		if not tech_locked:
+			if config.has("unlock_key") and config.has("unlock_amount"):
+				var unlock_key = config["unlock_key"]
+				var unlock_amount = config["unlock_amount"]
+				if main_node.resources.get(unlock_key, 0) >= unlock_amount:
+					button_dict[key]["unlocked"] = true
+					b.visible = true
+					b.disabled = false
+			else:
+				# No unlock condition = default visible,
+				# but still honor tech lock
+				button_dict[key]["unlocked"] = true
+				b.visible = true
+				# DON'T touch .disabled here — it's already correct
+	# === Re-apply tech gating ===
+	for key in button_dict.keys():
+		var btn_data = button_dict[key]
+		var b = btn_data["button"]
+		var tech_locked := false
+
+		if main_node.tech_tree and main_node.tech_tree.tech_config_state.has(key):
+			if not main_node.tech_tree.tech_config_state[key].get("purchased", false):
+				b.disabled = true
+				tech_locked = true
+
+		# Optional: disable again if unlock conditions not met
+		if not btn_data["unlocked"] or tech_locked:
+			b.disabled = true
 
 	position_buttons()
 

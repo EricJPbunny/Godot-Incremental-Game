@@ -1,7 +1,9 @@
 extends Node2D
 
 var shop: Shop
+var tech_tree: TechTree
 var auto_timer: Timer
+
 
 var resources = {
 	"effort": 150,
@@ -140,7 +142,16 @@ func _ready() -> void:
 
 	shop = Shop.new(self)
 	add_child(shop)
+	
+	tech_tree = TechTree.new(self)
+	add_child(tech_tree)
+
+	if ui_config.has("tech_tree_configs"):
+		var tech_configs = ui_config["tech_tree_configs"]
+		tech_tree.update_tech_buttons(tech_configs)
+
 	update_age("Stone Age")
+	shop.update_buttons(active_configs)  # Force sync after tech buttons exist
 
 
 	var bg = ColorRect.new()
@@ -192,6 +203,7 @@ func _ready() -> void:
 	click_label.position = Vector2(label_start_x, label_start_y + 50 + i * label_spacing_y + 40) # offset below resources
 	add_child(click_label)
 	resource_labels["total_clicks"] = click_label
+	
 
 
 
