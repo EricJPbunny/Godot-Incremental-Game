@@ -75,6 +75,7 @@
 				"button_label": "Stone Tools",
 				"unlock_key": "effort",
 				"unlock_amount": 100,
+				"one_time": true,
 				"cooldown_time": 0.5,
 				"button_width": 220,
 				"button_height": 60,
@@ -88,6 +89,7 @@
 				"button_label": "Structured Delegation",
 				"unlock_key": "effort",
 				"unlock_amount": 200,
+				"one_time": true,
 				"cooldown_time": 0.5,
 				"button_width": 220,
 				"button_height": 60,
@@ -156,6 +158,13 @@
 		"cost_key": "effort",
 		"cost_amount": 100,
 		"unlocks": "Fire Upgrade"
-	}
+		},
+		{
+		"tech_label": "Unlock Stone Tools",
+		"cost_key": "effort",
+		"cost_amount": 200,
+		"unlocks": "Stone Tools",
+		"requires": "Unlock Fire"
+		}
 	]
 }

@@ -21,6 +21,9 @@ func add_tech_button(button: Button, config: Dictionary):
 	button.visible = true
 	button.size = Vector2(200, 40)
 
+	# Set initial text
+	button.text = config.get("tech_label", "Tech")
+
 	# Initial style - grayed out
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.3, 0.3, 0.3)
@@ -31,6 +34,8 @@ func add_tech_button(button: Button, config: Dictionary):
 	# Tooltip
 	var tooltip = "Unlocks: " + config.get("unlocks", "unknown")
 	tooltip += "\nCost: " + str(config.get("cost_amount", 0)) + " " + config.get("cost_key", "")
+	if config.has("requires"):
+		tooltip += "\nRequires: " + config["requires"]
 	button.tooltip_text = tooltip
 
 	# Connect
@@ -46,19 +51,37 @@ func update_tech_button_properties(button: Button, config: Dictionary):
 		
 	# Update text
 	button.text = config.get("tech_label", "Tech")
+	
+	# Check prerequisites
+	var prerequisites_met = true
+	if config.has("requires"):
+		var required_tech = config["requires"]
+		if tech_config_state.has(required_tech):
+			if not tech_config_state[required_tech].get("purchased", false):
+				prerequisites_met = false
+		else:
+			prerequisites_met = false
+	
 	# Update tooltip
 	var tooltip = "Unlocks: " + config.get("unlocks", "unknown")
 	tooltip += "\nCost: " + str(config.get("cost_amount", 0)) + " " + config.get("cost_key", "")
+	if config.has("requires"):
+		tooltip += "\nRequires: " + config["requires"]
 	button.tooltip_text = tooltip
-	# Update style based on purchase state
+	
+	# Update style based on purchase state and prerequisites
 	var style = StyleBoxFlat.new()
 	var key = config.get("tech_label", "unknown")
 	if tech_config_state.get(key, {}).get("purchased", false):
 		style.bg_color = Color(0.15, 0.6, 0.15)  # Green for purchased
 		button.disabled = true
 	else:
-		style.bg_color = Color(0.3, 0.3, 0.3)  # Gray for unpurchased
-		button.disabled = false
+		if prerequisites_met:
+			style.bg_color = Color(0.3, 0.3, 0.3)  # Gray for available
+			button.disabled = false
+		else:
+			style.bg_color = Color(0.2, 0.2, 0.2)  # Darker gray for locked
+			button.disabled = true
 	button.add_theme_stylebox_override("normal", style)
 
 func handle_tech_press(config: Dictionary, button: Button):
@@ -80,6 +103,17 @@ func handle_tech_press(config: Dictionary, button: Button):
 	if tech_config_state.get(key, {})["purchased"]:
 		print("Tech already purchased: ", key)
 		return
+
+	# Check prerequisites
+	if config.has("requires"):
+		var required_tech = config["requires"]
+		if tech_config_state.has(required_tech):
+			if not tech_config_state[required_tech].get("purchased", false):
+				print("Cannot purchase ", key, " - required tech ", required_tech, " not purchased yet")
+				return
+		else:
+			print("Cannot purchase ", key, " - required tech ", required_tech, " not found")
+			return
 
 	if not main_node:
 		print("ERROR: Main node not found in tech tree!")
