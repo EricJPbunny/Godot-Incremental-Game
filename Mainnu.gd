@@ -1,29 +1,51 @@
 extends Node2D
 
-var shop: Shop
-var tech_tree: TechTree
-var auto_timer: Timer
+# ===== CONSTANTS =====
+# Resource management
+const DEFAULT_EFFORT_INCOME_PER_SECOND = 0.0
+const DEFAULT_EFFORT_PRESS_STRENGTH_BASE = 1
+const DEFAULT_EFFORT_PRESS_MULTIPLIER = 1.0
+const DEFAULT_EFFORT_PRESS_BONUS = 0
+const DEFAULT_AUTO_INTERVAL = 0.2  # Seconds between autoclick ticks
 
+# Manpower settings
+const DEFAULT_MANPOWER_STRENGTH = 1
 
-var resources = {
-	"effort": 49,
+# Game state
+const DEFAULT_TOTAL_CLICKS = 0
+const DEFAULT_AUTOCLICK_ENABLED = false
+const DEFAULT_CURRENT_AGE = "Stone Age"
+
+# Resource defaults
+const DEFAULT_RESOURCES = {
+	"effort": 0,
 	"manpower": 0,
 	"think": 0,
 	"materials": 0,
 }
 
-var total_clicks := 0
-var effort_income_per_second := 0.0
-var effort_press_strength_base := 1
-var effort_press_multiplier := 1.0
-var effort_press_bonus := 0
-var auto_interval := 0.2  # The value that can later be updated by upgrades
+# File paths
+const UI_CONFIG_PATH = "res://config/ui_config.json"
 
-var manpower_strength = 1
+# ===== VARIABLES =====
+var shop: Shop
+var tech_tree: TechTree
+var auto_timer: Timer
+
+var resources = DEFAULT_RESOURCES.duplicate()
+
+var total_clicks := DEFAULT_TOTAL_CLICKS
+var effort_income_per_second := DEFAULT_EFFORT_INCOME_PER_SECOND
+var effort_press_strength_base := DEFAULT_EFFORT_PRESS_STRENGTH_BASE
+var effort_press_multiplier := DEFAULT_EFFORT_PRESS_MULTIPLIER
+var effort_press_bonus := DEFAULT_EFFORT_PRESS_BONUS
+var auto_interval := DEFAULT_AUTO_INTERVAL
+
+var manpower_strength = DEFAULT_MANPOWER_STRENGTH
 var fire_unlocked = false
 var active_configs = []
-var autoclick_enabled := false
-var current_age := "Stone Age"
+var autoclick_enabled := DEFAULT_AUTOCLICK_ENABLED
+var current_age := DEFAULT_CURRENT_AGE
 
 var shop_configs = {}
 var ui_config = {}
@@ -104,10 +126,9 @@ func check_unlocks():
 		shop.update_buttons(active_configs)
 
 func load_ui_config():
-	var config_path = "res://config/ui_config.json"
-	var file = FileAccess.open(config_path, FileAccess.READ)
+	var file = FileAccess.open(UI_CONFIG_PATH, FileAccess.READ)
 	if not file:
-		print("ERROR: Could not open config file at: ", config_path)
+		print("ERROR: Could not open config file at: ", UI_CONFIG_PATH)
 		print("Make sure the file exists and is accessible.")
 		# Set default config to prevent crashes
 		ui_config = get_default_ui_config()
@@ -117,13 +138,13 @@ func load_ui_config():
 	file.close()
 	
 	if data.is_empty():
-		print("ERROR: Config file is empty: ", config_path)
+		print("ERROR: Config file is empty: ", UI_CONFIG_PATH)
 		ui_config = get_default_ui_config()
 		return
 	
 	var json = JSON.parse_string(data)
 	if json == null:
-		print("ERROR: Failed to parse JSON from config file: ", config_path)
+		print("ERROR: Failed to parse JSON from config file: ", UI_CONFIG_PATH)
 		print("Please check the JSON syntax.")
 		ui_config = get_default_ui_config()
 		return

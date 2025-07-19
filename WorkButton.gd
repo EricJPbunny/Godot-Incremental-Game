@@ -1,5 +1,10 @@
 extends Button
 
+# ===== CONSTANTS =====
+# Color parsing
+const DEFAULT_COLOR = Color.WHITE  # Fallback color for parsing errors
+
+# ===== VARIABLES =====
 @export var main_node: Node2D
 
 var cooldown_bar: ProgressBar
@@ -24,7 +29,7 @@ func parse_color(color_data) -> Color:
 		return Color(color_data)
 	else:
 		print("WARNING: Unsupported color format: ", color_data)
-		return Color.WHITE  # Default fallback
+		return DEFAULT_COLOR  # Default fallback
 
 func setup_from_config(config: Dictionary):
 	if not config:

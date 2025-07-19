@@ -1,6 +1,23 @@
 extends Node
 class_name TechTree
 
+# ===== CONSTANTS =====
+# Button defaults
+const DEFAULT_BUTTON_SIZE = Vector2(200, 40)
+const DEFAULT_BUTTON_WIDTH = 200
+const DEFAULT_BUTTON_HEIGHT = 40
+
+# UI positioning defaults
+const DEFAULT_START_X_OFFSET = 270  # Distance from right edge of screen
+const DEFAULT_START_Y = 100
+const DEFAULT_SPACING_Y = 50
+
+# Color constants for button states
+const COLOR_PURCHASED = Color(0.15, 0.6, 0.15)  # Green for purchased
+const COLOR_AVAILABLE = Color(0.3, 0.3, 0.3)    # Gray for available
+const COLOR_LOCKED = Color(0.2, 0.2, 0.2)       # Darker gray for locked
+
+# ===== VARIABLES =====
 var main_node
 var tech_buttons := {}
 var tech_config_state := {}
@@ -19,14 +36,14 @@ func add_tech_button(button: Button, config: Dictionary):
 	# Add to scene
 	add_child(button)
 	button.visible = true
-	button.size = Vector2(200, 40)
+	button.size = DEFAULT_BUTTON_SIZE
 
 	# Set initial text
 	button.text = config.get("tech_label", "Tech")
 
 	# Initial style - grayed out
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.3, 0.3, 0.3)
+	style.bg_color = COLOR_AVAILABLE
 	button.add_theme_stylebox_override("normal", style)
 
 	button.disabled = false
@@ -73,14 +90,14 @@ func update_tech_button_properties(button: Button, config: Dictionary):
 	var style = StyleBoxFlat.new()
 	var key = config.get("tech_label", "unknown")
 	if tech_config_state.get(key, {}).get("purchased", false):
-		style.bg_color = Color(0.15, 0.6, 0.15)  # Green for purchased
+		style.bg_color = COLOR_PURCHASED  # Green for purchased
 		button.disabled = true
 	else:
 		if prerequisites_met:
-			style.bg_color = Color(0.3, 0.3, 0.3)  # Gray for available
+			style.bg_color = COLOR_AVAILABLE  # Gray for available
 			button.disabled = false
 		else:
-			style.bg_color = Color(0.2, 0.2, 0.2)  # Darker gray for locked
+			style.bg_color = COLOR_LOCKED  # Darker gray for locked
 			button.disabled = true
 	button.add_theme_stylebox_override("normal", style)
 
@@ -134,7 +151,7 @@ func handle_tech_press(config: Dictionary, button: Button):
 
 	# Re-style to show it's purchased
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.15, 0.6, 0.15)
+	style.bg_color = COLOR_PURCHASED
 	button.add_theme_stylebox_override("normal", style)
 
 	# Unlock shop button
@@ -159,9 +176,9 @@ func update_tech_buttons(config_list: Array):
 		print("WARNING: Empty config_list provided to update_tech_buttons")
 		return
 		
-	var start_x = ProjectSettings.get_setting("display/window/size/viewport_width") - 270
-	var start_y = 100
-	var spacing_y = 50
+	var start_x = ProjectSettings.get_setting("display/window/size/viewport_width") - DEFAULT_START_X_OFFSET
+	var start_y = DEFAULT_START_Y
+	var spacing_y = DEFAULT_SPACING_Y
 
 	var config_keys := []
 	for i in range(config_list.size()):

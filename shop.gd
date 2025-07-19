@@ -1,6 +1,27 @@
 extends Node
 class_name Shop
 
+# ===== CONSTANTS =====
+# Button defaults
+const DEFAULT_BUTTON_SIZE = Vector2(180, 30)
+const DEFAULT_BUTTON_WIDTH = 180
+const DEFAULT_BUTTON_HEIGHT = 30
+
+# UI positioning defaults
+const DEFAULT_START_X = 50
+const DEFAULT_START_Y_OFFSET = 150  # Distance from bottom of screen
+const DEFAULT_SPACING_X = 20
+const DEFAULT_SPACING_Y = 0
+
+# Color constants for button states
+const COLOR_PURCHASED = Color(0.15, 0.6, 0.15)  # Green for purchased
+const COLOR_AVAILABLE = Color(0.3, 0.3, 0.3)    # Gray for available
+const COLOR_LOCKED = Color(0.2, 0.2, 0.2)       # Darker gray for locked
+
+# Debug constants
+const DEBUG_FIRE_UPGRADE_KEY = "Fire Upgrade"
+
+# ===== VARIABLES =====
 var current_age: String = "Stone Age"
 var buttons := []
 var button_dict := {}
@@ -37,7 +58,7 @@ func add_button(button: Button, config: Dictionary):
 	add_child(button)
 	button.visible = false  # Start invisible
 	button.disabled = true  # Start disabled
-	button.size = Vector2(180, 30)
+	button.size = DEFAULT_BUTTON_SIZE
 
 	# Apply tech locking immediately on creation
 	var key = config.get("button_label", "unknown")
@@ -46,13 +67,13 @@ func add_button(button: Button, config: Dictionary):
 		if not main_node.tech_tree.tech_config_state[key].get("purchased", false):
 			tech_locked = true
 			button.disabled = true
-			if key == "Fire Upgrade":
+			if key == DEBUG_FIRE_UPGRADE_KEY:
 				print("DEBUG: Fire Upgrade created and disabled due to tech lock")
 		else:
-			if key == "Fire Upgrade":
+			if key == DEBUG_FIRE_UPGRADE_KEY:
 				print("DEBUG: Fire Upgrade created and enabled - tech already purchased")
 	else:
-		if key == "Fire Upgrade":
+		if key == DEBUG_FIRE_UPGRADE_KEY:
 			print("DEBUG: Fire Upgrade created - no tech config found")
 
 	if config.has("cooldown_time") and button.has_method("set_cooldown_time"):
@@ -323,27 +344,27 @@ func update_buttons(config_list: Array):
 					if tech_config["config"]["unlocks"] == key:  # This tech unlocks our button
 						if not tech_config.get("purchased", false):
 							tech_locked = true
-							if key == "Fire Upgrade":
+							if key == DEBUG_FIRE_UPGRADE_KEY:
 								print("DEBUG: Fire Upgrade tech_locked = true (tech '", tech_key, "' not purchased)")
 						break
 		else:
-			if key == "Fire Upgrade":
+			if key == DEBUG_FIRE_UPGRADE_KEY:
 				print("DEBUG: Fire Upgrade - tech_tree is null!")
 
 		# Check if one-time upgrade is already purchased
 		var local_config = btn_data.get("config", {})
 		if local_config.get("one_time", false) and local_config.get("purchased", false):
 			tech_locked = true
-			if key == "Fire Upgrade":
+			if key == DEBUG_FIRE_UPGRADE_KEY:
 				print("DEBUG: Fire Upgrade tech_locked = true (already purchased)")
 
 		var should_disable = (tech_locked or not btn_data["unlocked"])
-		if key == "Fire Upgrade":
+		if key == DEBUG_FIRE_UPGRADE_KEY:
 			print("DEBUG: Fire Upgrade - tech_locked:", tech_locked, "unlocked:", btn_data["unlocked"], "should_disable:", should_disable)
 		
 		if b.disabled != should_disable:
 			b.disabled = should_disable
-			if key == "Fire Upgrade":
+			if key == DEBUG_FIRE_UPGRADE_KEY:
 				if should_disable:
 					print("DEBUG: Fire Upgrade disabled due to unlock conditions or tech lock (state change)")
 				else:
@@ -352,10 +373,10 @@ func update_buttons(config_list: Array):
 	position_buttons()
 
 func position_buttons():
-	var start_x = 50
-	var start_y = ProjectSettings.get_setting("display/window/size/viewport_height") - 150
-	var spacing_x = 20
-	var spacing_y = 0
+	var start_x = DEFAULT_START_X
+	var start_y = ProjectSettings.get_setting("display/window/size/viewport_height") - DEFAULT_START_Y_OFFSET
+	var spacing_x = DEFAULT_SPACING_X
+	var spacing_y = DEFAULT_SPACING_Y
 
 	if main_node.ui_config.has("global_ui"):
 		start_x = main_node.ui_config["global_ui"].get("start_x", start_x)
@@ -374,8 +395,8 @@ func position_buttons():
 	for value in button_dict.values():
 		var button = value["button"]
 		var config = value["config"]
-		var width = config.get("button_width", 180)
-		var height = config.get("button_height", 30)
+		var width = config.get("button_width", DEFAULT_BUTTON_WIDTH)
+		var height = config.get("button_height", DEFAULT_BUTTON_HEIGHT)
 
 		button.position = Vector2(current_x, start_y)
 		button.size = Vector2(width, height)
