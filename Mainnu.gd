@@ -6,7 +6,7 @@ var auto_timer: Timer
 
 
 var resources = {
-	"effort": 150,
+	"effort": 49,
 	"manpower": 0,
 	"think": 0,
 	"materials": 0,
@@ -30,29 +30,44 @@ var ui_config = {}
 var resource_labels = {}
 
 func update_age(new_age: String):
+	if not new_age or new_age.is_empty():
+		print("ERROR: Invalid age provided to update_age: ", new_age)
+		return
+		
 	active_configs.clear()
 
 	if shop_configs.has(new_age):
 		# Don't re-fetch base config; reuse current ones in shop.button_dict
-		if shop.current_age != new_age:
+		if shop and shop.current_age != new_age:
 			shop.clear_buttons() # Clear old buttons only on actual age change
 
 		var age_configs = shop_configs[new_age]
-		for key in age_configs.keys():
-			var config = age_configs[key]
-			if config.has("unlock_key") and config.has("unlock_amount"):
-				if resources[config["unlock_key"]] >= config["unlock_amount"]:
+		if age_configs is Dictionary:
+			for key in age_configs.keys():
+				var config = age_configs[key]
+				if config is Dictionary:
+					# Add all buttons to active_configs - let the shop handle tech locking
 					active_configs.append(config)
-			else:
-				active_configs.append(config)
+				else:
+					print("WARNING: Invalid config format for key: ", key)
+		else:
+			print("WARNING: age_configs is not a dictionary for age: ", new_age)
 
 		# Only call update_buttons if the age has changed or new unlocks appeared
-		shop.update_buttons(active_configs)
+		if shop:
+			shop.update_buttons(active_configs)
+	else:
+		print("WARNING: No shop configs found for age: ", new_age)
 
 func advance_to_next_age(new_age: String):
+	if not new_age or new_age.is_empty():
+		print("ERROR: Invalid age provided to advance_to_next_age: ", new_age)
+		return
+		
 	print("Advancing to:", new_age)
 	current_age = new_age
-	shop.transition_to_age(new_age)  # Tell Shop to clear previous buttons
+	if shop:
+		shop.transition_to_age(new_age)  # Tell Shop to clear previous buttons
 	update_age(new_age)
 
 func update_all_labels() -> void:
@@ -80,6 +95,7 @@ func check_unlocks():
 			if config.has("unlock_key") and config.has("unlock_amount"):
 				var unlock_key = config["unlock_key"]
 				var unlock_amount = config["unlock_amount"]
+				# Add to active configs if resource conditions are met
 				if config not in active_configs and resources[unlock_key] >= unlock_amount:
 					active_configs.append(config)
 			else:
@@ -88,23 +104,58 @@ func check_unlocks():
 		shop.update_buttons(active_configs)
 
 func load_ui_config():
-	var file = FileAccess.open("res://config/ui_config.json", FileAccess.READ)
-	if file:
-		var data = file.get_as_text()
-		var json = JSON.parse_string(data)
-		if json != null:
-			ui_config = sanitize_json_numbers(json)
-			print("UI config loaded successfully!")
+	var config_path = "res://config/ui_config.json"
+	var file = FileAccess.open(config_path, FileAccess.READ)
+	if not file:
+		print("ERROR: Could not open config file at: ", config_path)
+		print("Make sure the file exists and is accessible.")
+		# Set default config to prevent crashes
+		ui_config = get_default_ui_config()
+		return
+	
+	var data = file.get_as_text()
+	file.close()
+	
+	if data.is_empty():
+		print("ERROR: Config file is empty: ", config_path)
+		ui_config = get_default_ui_config()
+		return
+	
+	var json = JSON.parse_string(data)
+	if json == null:
+		print("ERROR: Failed to parse JSON from config file: ", config_path)
+		print("Please check the JSON syntax.")
+		ui_config = get_default_ui_config()
+		return
+	
+	ui_config = sanitize_json_numbers(json)
+	print("UI config loaded successfully!")
 
-			if ui_config.has("shop_configs"):
-				shop_configs = ui_config["shop_configs"]
-			else:
-				print("Warning: shop_configs not found in ui_config!")
-		else:
-			print("Error parsing ui_config JSON!")
-		file.close()
+	if ui_config.has("shop_configs"):
+		shop_configs = ui_config["shop_configs"]
 	else:
-		print("Could not open ui_config JSON file!")
+		print("WARNING: shop_configs not found in ui_config! Using empty config.")
+		shop_configs = {}
+
+func get_default_ui_config() -> Dictionary:
+	print("Using default UI configuration due to config loading failure.")
+	return {
+		"global_ui": {
+			"start_x": 50,
+			"start_y": 100,
+			"button_spacing_x": 40,
+			"button_spacing_y": 0
+		},
+		"resource_labels_ui": {
+			"start_x": 50,
+			"start_y": 50,
+			"spacing_x": 200,
+			"spacing_y": 0
+		},
+		"shop_configs": {},
+		"tech_tree_configs": [],
+		"work_button": {}
+	}
 
 func sanitize_json_numbers(data):
 	if typeof(data) == TYPE_DICTIONARY:
@@ -123,43 +174,44 @@ func sanitize_json_numbers(data):
 	else:
 		return data
 
-func _ready() -> void:
-	load_ui_config()
-	var start_x = 50
-	var start_y = 100
-	var spacing_x = 40
-	var spacing_y = 0
-
-	if ui_config.has("global_ui"):
-		start_x = ui_config["global_ui"].get("start_x", 50)
-		start_y = ui_config["global_ui"].get("start_y", 100)
-		spacing_x = ui_config["global_ui"].get("button_spacing_x", 40)
-		spacing_y = ui_config["global_ui"].get("button_spacing_y", 0)
-	else:
-		print("Warning: global_ui missing in config, using defaults.")
-
-	var i = 0
-
+func setup_shop_and_tech_tree():
+	if not ui_config:
+		print("ERROR: UI config not loaded, cannot setup shop and tech tree!")
+		return
+	
 	shop = Shop.new(self)
+	if not shop:
+		print("ERROR: Failed to create Shop instance!")
+		return
 	add_child(shop)
 	
 	tech_tree = TechTree.new(self)
+	if not tech_tree:
+		print("ERROR: Failed to create TechTree instance!")
+		return
 	add_child(tech_tree)
 
 	if ui_config.has("tech_tree_configs"):
 		var tech_configs = ui_config["tech_tree_configs"]
-		tech_tree.update_tech_buttons(tech_configs)
+		if tech_configs is Array:
+			tech_tree.update_tech_buttons(tech_configs)
+		else:
+			print("WARNING: tech_tree_configs is not an array, skipping tech tree setup.")
+	else:
+		print("INFO: No tech_tree_configs found in UI config.")
 
 	update_age("Stone Age")
-	shop.update_buttons(active_configs)  # Force sync after tech buttons exist
+	if shop:
+		shop.update_buttons(active_configs)  # Force sync after tech buttons exist
 
-
+func setup_background():
 	var bg = ColorRect.new()
 	bg.color = Color(0.85, 0.72, 0.55)
 	bg.size = get_viewport_rect().size
 	add_child(bg)
 	move_child(bg, 0)
 
+func setup_timers():
 	auto_timer = Timer.new()
 	auto_timer.wait_time = auto_interval
 	auto_timer.one_shot = false
@@ -168,26 +220,50 @@ func _ready() -> void:
 	print("On ready, is timer stopped? ", auto_timer.is_stopped())
 	add_child(auto_timer)
 	auto_timer.timeout.connect(_on_auto_timer_timeout)
+
+func setup_work_button():
+	if not ui_config:
+		print("ERROR: UI config not loaded, cannot setup work button!")
+		return
+	
+	var work_button = get_node_or_null("ButtonWork")
+	if not work_button:
+		print("ERROR: ButtonWork node not found in scene!")
+		return
 	
 	var work_button_config = ui_config.get("work_button", {})
-	$ButtonWork.setup_from_config(work_button_config)
+	if work_button.has_method("setup_from_config"):
+		work_button.setup_from_config(work_button_config)
+	else:
+		print("ERROR: ButtonWork does not have setup_from_config method!")
 
+func setup_resource_labels():
+	if not ui_config:
+		print("ERROR: UI config not loaded, cannot setup resource labels!")
+		return
+	
 	var label_start_x = 50
 	var label_start_y = 50
 	var label_spacing_x = 200
 	var label_spacing_y = 0
 
-
 	if ui_config.has("resource_labels_ui"):
 		var label_conf = ui_config["resource_labels_ui"]
-		label_start_x = label_conf.get("start_x", 50)
-		label_start_y = label_conf.get("start_y", 50)
-		label_spacing_x = label_conf.get("spacing_x", 200)
-		label_spacing_y = label_conf.get("spacing_y", 0)
+		if label_conf is Dictionary:
+			label_start_x = label_conf.get("start_x", 50)
+			label_start_y = label_conf.get("start_y", 50)
+			label_spacing_x = label_conf.get("spacing_x", 200)
+			label_spacing_y = label_conf.get("spacing_y", 0)
+		else:
+			print("WARNING: resource_labels_ui is not a dictionary, using defaults.")
 
-	i = 0
+	var i = 0
 	for key in resources:
 		var label = RichTextLabel.new()
+		if not label:
+			print("ERROR: Failed to create RichTextLabel for resource: ", key)
+			continue
+			
 		label.bbcode_enabled = true
 		label.text = "[b]" + key.capitalize() + ":[/b] 0"
 		label.size = Vector2(180, 30)
@@ -196,17 +272,28 @@ func _ready() -> void:
 		add_child(label)
 		resource_labels[key] = label
 		i += 1
-	var click_label = RichTextLabel.new()
-	click_label.bbcode_enabled = true
-	click_label.text = "[b]Total Clicks:[/b] 0"
-	click_label.size = Vector2(250, 30)
-	click_label.position = Vector2(label_start_x, label_start_y + 50 + i * label_spacing_y + 40) # offset below resources
-	add_child(click_label)
-	resource_labels["total_clicks"] = click_label
 	
+	var click_label = RichTextLabel.new()
+	if click_label:
+		click_label.bbcode_enabled = true
+		click_label.text = "[b]Total Clicks:[/b] 0"
+		click_label.size = Vector2(250, 30)
+		click_label.position = Vector2(label_start_x, label_start_y + 50 + i * label_spacing_y + 40)
+		add_child(click_label)
+		resource_labels["total_clicks"] = click_label
+	else:
+		print("ERROR: Failed to create Total Clicks label!")
 
+func _ready() -> void:
+	load_ui_config()
+	setup_shop_and_tech_tree()
+	setup_background()
+	setup_timers()
+	setup_work_button()
+	setup_resource_labels()
 
 
 func _process(delta: float) -> void:
 	effort_income_per_second = float(manpower_strength * resources["manpower"] * (1.0/auto_interval))
 	update_all_labels()
+	check_unlocks()  # Check for new unlocks when resources change

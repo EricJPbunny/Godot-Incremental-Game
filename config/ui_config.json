@@ -154,8 +154,8 @@
 		{
 		"tech_label": "Unlock Fire",
 		"cost_key": "effort",
-		"cost ammount": 100,
-		"unlocks": "fire_upgrade"
+		"cost_amount": 100,
+		"unlocks": "Fire Upgrade"
 	}
 	]
 }
