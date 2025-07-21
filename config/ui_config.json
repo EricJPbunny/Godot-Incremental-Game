@@ -114,14 +114,44 @@
 				"cost_amount": 500,
 				"reward_key": "materials",
 				"reward_amount": 1,
-				"cost_scale": 1.3,
+				"cost_scale": 1.08,
+				"scaling_type": "logloglog",
 				"button_label": "Bronze Smelting",
 				"cooldown_time": 0.5,
 				"button_width": 220,
 				"button_height": 60,
 				"button_color": "#CD7F32",
 				"unlock_key": "effort",
-				"unlock_amount": 500
+				"unlock_amount": 500,
+				"requires": ["Bronze Alloying"],
+				"tooltip": "Smelt bronze from copper and tin. Produces 1 material per purchase. Scaling: log(log(log(x)))."
+			},
+			"large_foundry": {
+				"cost_key": "materials",
+				"cost_amount": 10,
+				"button_label": "Large Foundry",
+				"effect": "boost_manpower_productivity",
+				"bonus_multiplier": 0.5,
+				"requires": ["Bronze Alloying"],
+				"cooldown_time": 0.5,
+				"button_width": 220,
+				"button_height": 60,
+				"button_color": "#A0522D",
+				"tooltip": "Boosts manpower productivity by 50%. Requires Bronze Alloying."
+			},
+			"laborers": {
+				"cost_key": "effort",
+				"cost_amount": 120,
+				"reward_key": "manpower",
+				"reward_amount": 3,
+				"cost_scale": 1.18,
+				"button_label": "Laborers",
+				"cooldown_time": 0.5,
+				"button_width": 220,
+				"button_height": 60,
+				"button_color": "#B87333",
+				"unlock_key": "effort",
+				"unlock_amount": 100
 			},
 			"wheel": {
 				"cost_key": "effort",
@@ -149,22 +179,78 @@
 				"button_color": "#A0522D",
 				"unlock_key": "materials",
 				"unlock_amount": 2
+			},
+			"advance_iron_age": {
+				"button_label": "Advance to Iron Age",
+				"cost_key": "effort",
+				"cost_amount": 10000,
+				"cost_key_2": "think",
+				"cost_amount_2": 500,
+				"cost_key_3": "materials",
+				"cost_amount_3": 100,
+				"effect": "advance_age",
+				"advance_to_age": "Iron Age",
+				"requires_all_bronze_techs": true,
+				"button_color": "#b0b0b0",
+				"button_width": 260,
+				"button_height": 50,
+				"tooltip": "Advance to the Iron Age. Requires all Bronze Age techs, 10000 effort, 500 think, and 100 materials (all consumed)."
+			}
+		},
+		"Iron Age": {
+			"iron_laborers": {
+				"cost_key": "effort",
+				"cost_amount": 500,
+				"reward_key": "manpower",
+				"reward_amount": 5,
+				"cost_scale": 1.12,
+				"button_label": "Iron Laborers",
+				"cooldown_time": 0.5,
+				"button_width": 220,
+				"button_height": 60,
+				"button_color": "#888888",
+				"tooltip": "Hire iron age laborers. +5 manpower per purchase. Price scales slowly for better long-term value."
 			}
 		}
 	},
 	"tech_tree_configs": [
 		{
-		"tech_label": "Unlock Fire",
-		"cost_key": "effort",
-		"cost_amount": 100,
-		"unlocks": "Fire Upgrade"
+			"tech_label": "Unlock Fire",
+			"cost_key": "effort",
+			"cost_amount": 100,
+			"unlocks": "Fire Upgrade"
 		},
 		{
-		"tech_label": "Unlock Stone Tools",
-		"cost_key": "effort",
-		"cost_amount": 200,
-		"unlocks": "Stone Tools",
-		"requires": "Unlock Fire"
+			"tech_label": "Unlock Stone Tools",
+			"cost_key": "effort",
+			"cost_amount": 200,
+			"unlocks": "Stone Tools",
+			"requires": "Unlock Fire"
+		},
+		{
+			"tech_label": "Copper Extraction",
+			"cost_key": "effort",
+			"cost_amount": 350,
+			"unlocks": null,
+			"tooltip": "Unlocks the ability to extract copper, a key ingredient for bronze. Required for Bronze Alloying.",
+			"button_color": "#B87333"
+		},
+		{
+			"tech_label": "Tin Extraction",
+			"cost_key": "effort",
+			"cost_amount": 350,
+			"unlocks": null,
+			"tooltip": "Unlocks the ability to extract tin, a key ingredient for bronze. Required for Bronze Alloying.",
+			"button_color": "#BFC1C2"
+		},
+		{
+			"tech_label": "Bronze Alloying",
+			"cost_key": "effort",
+			"cost_amount": 600,
+			"unlocks": "Bronze Smelting",
+			"requires": ["Copper Extraction", "Tin Extraction"],
+			"tooltip": "Combine copper and tin to unlock bronze production. Required for Bronze Smelting.",
+			"button_color": "#CD7F32"
 		}
 	]
 }

@@ -25,6 +25,13 @@ var tech_config_state := {}
 func _init(p_main_node = null):
 	main_node = p_main_node
 
+# Add this method to control tech button visibility
+func set_tree_visible(visible: bool):
+	for b in tech_buttons.values():
+		if b:
+			b.visible = visible
+
+# In add_tech_button, parent to TechTreeWindow if it exists
 func add_tech_button(button: Button, config: Dictionary):
 	if not button:
 		print("ERROR: Cannot add null tech button!")
@@ -32,27 +39,54 @@ func add_tech_button(button: Button, config: Dictionary):
 	if not config:
 		print("ERROR: Cannot add tech button with null config!")
 		return
-		
-	# Add to scene
-	add_child(button)
+	
+	# Parent to TechTreeWindow if it exists
+	var win = get_node_or_null("../TechTreeWindow")
+	if win:
+		win.add_child(button)
+	else:
+		add_child(button)
 	button.visible = true
 	button.size = DEFAULT_BUTTON_SIZE
 
 	# Set initial text
 	button.text = config.get("tech_label", "Tech")
 
-	# Initial style - grayed out
+	# Color by vibe (placeholder logic)
 	var style = StyleBoxFlat.new()
-	style.bg_color = COLOR_AVAILABLE
+	var label = config.get("tech_label", "").to_lower()
+	if label.find("fire") != -1:
+		style.bg_color = Color(0.8, 0.2, 0.1) # red
+	elif label.find("tool") != -1:
+		style.bg_color = Color(0.4, 0.4, 0.4) # gray
+	elif label.find("bronze") != -1:
+		style.bg_color = Color(0.8, 0.5, 0.2) # bronze
+	elif label.find("tin") != -1:
+		style.bg_color = Color(0.7, 0.7, 0.8) # tin/silver
+	elif label.find("copper") != -1:
+		style.bg_color = Color(0.8, 0.4, 0.2) # copper
+	else:
+		style.bg_color = COLOR_AVAILABLE
 	button.add_theme_stylebox_override("normal", style)
 
 	button.disabled = false
 
 	# Tooltip
-	var tooltip = "Unlocks: " + config.get("unlocks", "unknown")
-	tooltip += "\nCost: " + str(config.get("cost_amount", 0)) + " " + config.get("cost_key", "")
+	var unlocks_val = ""
+	if config.has("unlocks") and config["unlocks"] != null:
+		unlocks_val = str(config["unlocks"])
+	var tooltip = ""
+	if unlocks_val != "":
+		tooltip += "Unlocks: " + unlocks_val + "\n"
+	tooltip += "Cost: " + str(config.get("cost_amount", 0)) + " " + config.get("cost_key", "")
 	if config.has("requires"):
-		tooltip += "\nRequires: " + config["requires"]
+		var reqs = config["requires"]
+		if typeof(reqs) == TYPE_ARRAY:
+			tooltip += "\nRequires: " + ", ".join(reqs)
+		else:
+			tooltip += "\nRequires: " + str(reqs)
+	if config.has("tooltip"):
+		tooltip += "\n" + str(config["tooltip"])
 	button.tooltip_text = tooltip
 
 	# Connect
@@ -72,12 +106,15 @@ func update_tech_button_properties(button: Button, config: Dictionary):
 	# Check prerequisites
 	var prerequisites_met = true
 	if config.has("requires"):
-		var required_tech = config["requires"]
-		if tech_config_state.has(required_tech):
-			if not tech_config_state[required_tech].get("purchased", false):
-				prerequisites_met = false
+		var reqs = config["requires"]
+		if typeof(reqs) == TYPE_ARRAY:
+			for req in reqs:
+				if not tech_config_state.has(req) or not tech_config_state[req].get("purchased", false):
+					prerequisites_met = false
+					break
 		else:
-			prerequisites_met = false
+			if not tech_config_state.has(reqs) or not tech_config_state[reqs].get("purchased", false):
+				prerequisites_met = false
 	
 	# Update tooltip
 	var tooltip = "Unlocks: " + config.get("unlocks", "unknown")
@@ -123,14 +160,22 @@ func handle_tech_press(config: Dictionary, button: Button):
 
 	# Check prerequisites
 	if config.has("requires"):
-		var required_tech = config["requires"]
-		if tech_config_state.has(required_tech):
-			if not tech_config_state[required_tech].get("purchased", false):
-				print("Cannot purchase ", key, " - required tech ", required_tech, " not purchased yet")
-				return
+		var reqs = config["requires"]
+		if typeof(reqs) == TYPE_ARRAY:
+			for req in reqs:
+				if not tech_config_state.has(req):
+					print("Cannot purchase ", key, " - required tech ", req, " not found")
+					return
+				if not tech_config_state[req].get("purchased", false):
+					print("Cannot purchase ", key, " - required tech ", req, " not purchased yet")
+					return
 		else:
-			print("Cannot purchase ", key, " - required tech ", required_tech, " not found")
-			return
+			if not tech_config_state.has(reqs):
+				print("Cannot purchase ", key, " - required tech ", reqs, " not found")
+				return
+			if not tech_config_state[reqs].get("purchased", false):
+				print("Cannot purchase ", key, " - required tech ", reqs, " not purchased yet")
+				return
 
 	if not main_node:
 		print("ERROR: Main node not found in tech tree!")
@@ -155,8 +200,8 @@ func handle_tech_press(config: Dictionary, button: Button):
 	button.add_theme_stylebox_override("normal", style)
 
 	# Unlock shop button
-	if config.has("unlocks"):
-		var unlock_key = config["unlocks"]
+	if config.has("unlocks") and config["unlocks"] != null and str(config["unlocks"]).strip_edges() != "":
+		var unlock_key = str(config["unlocks"])
 		if main_node.shop and main_node.shop.button_dict.has(unlock_key):
 			var shop_button_data = main_node.shop.button_dict[unlock_key]
 			if shop_button_data is Dictionary and shop_button_data.has("button"):
@@ -175,35 +220,41 @@ func update_tech_buttons(config_list: Array):
 	if not config_list:
 		print("WARNING: Empty config_list provided to update_tech_buttons")
 		return
-		
+	
 	var start_x = ProjectSettings.get_setting("display/window/size/viewport_width") - DEFAULT_START_X_OFFSET
 	var start_y = DEFAULT_START_Y
 	var spacing_y = DEFAULT_SPACING_Y
 
 	var config_keys := []
+
+	# First pass: register all techs in tech_config_state
 	for i in range(config_list.size()):
 		var config = config_list[i]
 		if not config is Dictionary:
 			print("WARNING: Invalid config format in tech config_list at index: ", i)
 			continue
-			
 		var key = config.get("tech_label", "unknown")
 		config_keys.append(key)
+		if not tech_config_state.has(key):
+			tech_config_state[key] = {
+				"config": config.duplicate(true),
+				"purchased": false,
+				"button": null
+			}
 
+	# Second pass: create buttons and set up properties
+	for i in range(config_list.size()):
+		var config = config_list[i]
+		var key = config.get("tech_label", "unknown")
 		var b: Button
 		if not tech_buttons.has(key):
 			b = Button.new()
 			if not b:
 				print("ERROR: Failed to create tech button for key: ", key)
 				continue
-			var local_config = config.duplicate(true)
-			tech_config_state[key] = {
-				"config": local_config,
-				"purchased": false,
-				"button": b
-			}
+			tech_config_state[key]["button"] = b
 			tech_buttons[key] = b
-			add_tech_button(b, local_config)
+			add_tech_button(b, config)
 		else:
 			b = tech_buttons[key]
 			if b:
@@ -211,8 +262,11 @@ func update_tech_buttons(config_list: Array):
 			else:
 				print("ERROR: Tech button is null for key: ", key)
 				continue
-
-		b.position = Vector2(start_x, start_y + i * spacing_y)
+		# Position relative to window if parented to it
+		if b.get_parent() and b.get_parent().name == "TechTreeWindow":
+			b.position = Vector2(20, 40 + i * DEFAULT_SPACING_Y)
+		else:
+			b.position = Vector2(start_x, start_y + i * spacing_y)
 
 	# Hide buttons not in current config
 	for key in tech_buttons.keys():

@@ -15,3 +15,10 @@ text = "Work
 \"Excess calories converted into action\""
 script = ExtResource("2_06tve")
 main_node = NodePath("..")
+
+[node name="TechTreeWindow" type="Window" parent="."]
+visible = false
+
+[node name="TechTreeToggle" type="Button" parent="."]
+text = "Tech
+Tree"

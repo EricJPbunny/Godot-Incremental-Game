@@ -1,6 +1,5 @@
-res://label.tscn
-res://shop.gd
-res://Mainnu.gd
 res://config/ui_config.json
+res://label.tscn
+res://Mainnu.gd
+res://shop.gd
 res://TechTree.gd
-res://WorkButton.gd

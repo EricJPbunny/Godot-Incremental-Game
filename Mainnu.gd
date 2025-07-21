@@ -18,10 +18,10 @@ const DEFAULT_CURRENT_AGE = "Stone Age"
 
 # Resource defaults
 const DEFAULT_RESOURCES = {
-	"effort": 0,
-	"manpower": 0,
-	"think": 0,
-	"materials": 0,
+	"effort": 29000,
+	"manpower": 100,
+	"think": 2000,
+	"materials": 2000,
 }
 
 # File paths
@@ -313,6 +313,20 @@ func _ready() -> void:
 	setup_work_button()
 	setup_resource_labels()
 
+	# Tech tree window and toggle logic
+	var tech_tree_window = get_node_or_null("TechTreeWindow")
+	var tech_tree_toggle = get_node_or_null("TechTreeToggle")
+	if tech_tree_window and tech_tree_toggle:
+		# Position window at right side, vertically centered
+		var screen_size = get_viewport_rect().size
+		tech_tree_window.size = Vector2(600, 400)
+		tech_tree_window.position = Vector2(screen_size.x - tech_tree_window.size.x - 40, (screen_size.y - tech_tree_window.size.y) / 2)
+		tech_tree_toggle.position = Vector2(0, (screen_size.y - tech_tree_toggle.size.y) / 2)
+		tech_tree_toggle.pressed.connect(func():
+			tech_tree_window.visible = not tech_tree_window.visible
+			if tech_tree:
+				tech_tree.set_tree_visible(tech_tree_window.visible)
+		)
 
 func _process(delta: float) -> void:
 	effort_income_per_second = float(manpower_strength * resources["manpower"] * (1.0/auto_interval))

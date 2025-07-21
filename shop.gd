@@ -144,8 +144,62 @@ func handle_button_press(config: Dictionary, button: Button):
 	if not button:
 		print("ERROR: Button press with null button!")
 		return
-		
+	
 	print("Pressed:", button.text)
+
+	# Special logic for advancing to Iron Age
+	if config.get("requires_all_bronze_techs", false):
+		if not main_node or not main_node.tech_tree:
+			print("ERROR: Main node or tech tree not found!")
+			return
+		var all_bronze_techs_researched = true
+		for tech_key in main_node.tech_tree.tech_config_state.keys():
+			var tech = main_node.tech_tree.tech_config_state[tech_key]
+			if tech.has("config") and tech["config"].has("cost_key") and tech["config"].get("cost_key") == "effort":
+				# Only check Bronze Age techs (skip Stone Age, etc.)
+				if tech["config"].has("tooltip") and tech["config"]["tooltip"].find("Bronze") != -1:
+					if not tech.get("purchased", false):
+						all_bronze_techs_researched = false
+						print("Cannot advance: tech not researched:", tech_key)
+						break
+		if not all_bronze_techs_researched:
+			print("Cannot advance: not all Bronze Age techs researched.")
+			return
+		# Check all three resources
+		var cost_key = config.get("cost_key", null)
+		var cost_amount = config.get("cost_amount", 0)
+		var cost_key_2 = config.get("cost_key_2", null)
+		var cost_amount_2 = config.get("cost_amount_2", 0)
+		var cost_key_3 = config.get("cost_key_3", null)
+		var cost_amount_3 = config.get("cost_amount_3", 0)
+		if not main_node.resources.has(cost_key) or main_node.resources[cost_key] < cost_amount:
+			print("Not enough ", cost_key, " to advance!")
+			return
+		if not main_node.resources.has(cost_key_2) or main_node.resources[cost_key_2] < cost_amount_2:
+			print("Not enough ", cost_key_2, " to advance!")
+			return
+		if not main_node.resources.has(cost_key_3) or main_node.resources[cost_key_3] < cost_amount_3:
+			print("Not enough ", cost_key_3, " to advance!")
+			return
+		# Deduct all resources
+		main_node.resources[cost_key] -= cost_amount
+		main_node.resources[cost_key_2] -= cost_amount_2
+		main_node.resources[cost_key_3] -= cost_amount_3
+		print("Advancing to Iron Age!")
+		if config.get("effect") == "advance_age":
+			var target_age = config.get("advance_to_age", null)
+			if target_age != null:
+				main_node.advance_to_next_age(target_age)
+			else:
+				print("WARNING: advance_age effect missing advance_to_age!")
+		return
+
+	# Enforce 'requires' dependencies for shop buttons
+	if config.has("requires") and main_node and main_node.tech_tree:
+		for req in config["requires"]:
+			if not main_node.tech_tree.tech_config_state.has(req) or not main_node.tech_tree.tech_config_state[req].get("purchased", false):
+				print("Cannot purchase", config.get("button_label", "unknown"), "- required tech", req, "not purchased yet.")
+				return
 
 	var cost_key = config.get("cost_key", null)
 	var reward_key = config.get("reward_key", null)
@@ -171,7 +225,7 @@ func handle_button_press(config: Dictionary, button: Button):
 	if not main_node.resources.has(cost_key):
 		print("ERROR: Cost resource not found: ", cost_key)
 		return
-		
+	
 	if main_node.resources.get(cost_key, 0) >= cost_amount:
 		main_node.resources[cost_key] -= cost_amount
 		if reward_key:
@@ -200,6 +254,12 @@ func handle_button_press(config: Dictionary, button: Button):
 						main_node.advance_to_next_age(target_age)
 					else:
 						print("WARNING: advance_age effect missing advance_to_age!")
+				"boost_manpower_productivity":
+					if config.has("bonus_multiplier"):
+						main_node.effort_press_multiplier += config["bonus_multiplier"]
+						print("Manpower productivity boosted by ", config["bonus_multiplier"] * 100, "%!")
+					else:
+						print("WARNING: boost_manpower_productivity effect missing bonus_multiplier!")
 				_:
 					print("WARNING: Unknown effect: ", config["effect"])
 
@@ -218,6 +278,8 @@ func handle_button_press(config: Dictionary, button: Button):
 						new_cost = int(cost_amount * cost_scale)
 					"logarithmic":
 						new_cost = int(cost_amount + log(cost_amount + 1) * 5)
+					"logloglog":
+						new_cost = int(cost_amount + log(log(log(cost_amount + 10) + 1) + 1) * 2)
 					_:
 						print("WARNING: Unknown scaling_type: ", config["scaling_type"])
 			else:
