@@ -321,12 +321,12 @@ func update_tech_buttons(config_list: Array):
 			else:
 				print("ERROR: Tech button is null for key: ", key)
 				continue
-		# Always parent to TechTreeWindow if it exists
-		var win = get_node_or_null("../TechTreeWindow")
-		if win and b.get_parent() != win:
+		# Always parent to TechTreePanel if it exists
+		var panel = get_node_or_null("../TechTreePanel")
+		if panel and b.get_parent() != panel:
 			b.get_parent().remove_child(b)
-			win.add_child(b)
-		# Position relative to window
+			panel.add_child(b)
+		# Position relative to panel
 		b.position = Vector2(20, 40 + i * spacing_y)
 		b.visible = true
 

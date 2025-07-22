@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://c22qx13g4qgwl"]
+[gd_scene load_steps=4 format=3 uid="uid://c22qx13g4qgwl"]
 
 [ext_resource type="Script" uid="uid://c2wj6ty6i5dtw" path="res://Mainnu.gd" id="1_y38sv"]
 [ext_resource type="Script" uid="uid://cnq4muyxad21p" path="res://WorkButton.gd" id="2_06tve"]
+[ext_resource type="Script" uid="uid://bj7cacio3l2rq" path="res://TechTreePanel.gd" id="3_i3osk"]
 
 [node name="Node2D" type="Node2D"]
 script = ExtResource("1_y38sv")
@@ -16,8 +17,16 @@ text = "Work
 script = ExtResource("2_06tve")
 main_node = NodePath("..")
 
-[node name="TechTreeWindow" type="Window" parent="."]
+[node name="TechTreePanel" type="Panel" parent="."]
 visible = false
+script = ExtResource("3_i3osk")
+
+[node name="TechTreeBG" type="ColorRect" parent="TechTreePanel"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.8, 0.8, 0.7, 0.4)
 
 [node name="TechTreeToggle" type="Button" parent="."]
 text = "Tech

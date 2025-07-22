@@ -27,6 +27,62 @@ const DEFAULT_RESOURCES = {
 # File paths
 const UI_CONFIG_PATH = "res://config/ui_config.json"
 
+# ===== AGE PALETTES =====
+const AGE_PALETTES = {
+	"Stone Age": {
+		"background": Color(0.85, 0.72, 0.55),
+		"resource_text": Color(0.2, 0.2, 0.2),
+		"work_button": Color("#C68642"),
+		"tech_tree_window": Color(0.8, 0.8, 0.7, 0.4)
+	},
+	"Bronze Age": {
+		"background": Color(0.8, 0.6, 0.3),
+		"resource_text": Color(0.3, 0.2, 0.1),
+		"work_button": Color("#CD7F32"),
+		"tech_tree_window": Color(0.9, 0.8, 0.6, 0.4)
+	},
+	"Iron Age": {
+		"background": Color(0.7, 0.7, 0.7),
+		"resource_text": Color(0.1, 0.1, 0.1),
+		"work_button": Color("#888888"),
+		"tech_tree_window": Color(0.7, 0.7, 0.8, 0.4)
+	}
+}
+
+# ===== APPLY AGE PALETTE =====
+func apply_age_palette(age: String):
+	if not AGE_PALETTES.has(age):
+		print("[PALETTE] No palette for age:", age)
+		return
+	var palette = AGE_PALETTES[age]
+	# Background
+	var bg = get_node_or_null("ColorRect")
+	if not bg:
+		for child in get_children():
+			if child is ColorRect:
+				bg = child
+				break
+	if bg:
+		bg.color = palette["background"]
+	# Resource labels
+	for label in resource_labels.values():
+		if label:
+			label.add_theme_color_override("default_color", palette["resource_text"])
+	# Work button
+	var work_button = get_node_or_null("ButtonWork")
+	if work_button:
+		var stylebox = StyleBoxFlat.new()
+		stylebox.bg_color = palette["work_button"]
+		var new_theme = Theme.new()
+		new_theme.set_stylebox("normal", "Button", stylebox)
+		new_theme.set_stylebox("hover", "Button", stylebox)
+		new_theme.set_stylebox("pressed", "Button", stylebox)
+		work_button.theme = new_theme
+	# Tech tree window background (ColorRect)
+	var tech_tree_bg = get_node_or_null("TechTreePanel/TechTreeBG")
+	if tech_tree_bg:
+		tech_tree_bg.color = palette["tech_tree_window"]
+
 # ===== VARIABLES =====
 var shop: Shop
 var tech_tree: TechTree
@@ -88,6 +144,7 @@ func advance_to_next_age(new_age: String):
 		
 	print("Advancing to:", new_age)
 	current_age = new_age
+	apply_age_palette(new_age)
 	if shop:
 		shop.transition_to_age(new_age)  # Tell Shop to clear previous buttons
 	update_age(new_age)
@@ -309,6 +366,11 @@ func setup_resource_labels():
 	else:
 		print("ERROR: Failed to create Total Clicks label!")
 
+# ===== BRING UI TO FRONT =====
+func bring_ui_to_front(node: Node):
+	if node and node.get_parent():
+		node.get_parent().move_child(node, node.get_parent().get_child_count() - 1)
+
 func _ready() -> void:
 	load_ui_config()
 	setup_shop_and_tech_tree()
@@ -317,21 +379,23 @@ func _ready() -> void:
 	setup_work_button()
 	setup_resource_labels()
 
-	# Tech tree window and toggle logic
-	var tech_tree_window = get_node_or_null("TechTreeWindow")
+	# Tech tree panel and toggle logic
+	var tech_tree_panel = get_node_or_null("TechTreePanel")
 	var tech_tree_toggle = get_node_or_null("TechTreeToggle")
-	if tech_tree_window and tech_tree_toggle:
-		# Position window at right side, vertically centered
+	if tech_tree_panel and tech_tree_toggle:
+		# Position panel at right side, vertically centered
 		var screen_size = get_viewport_rect().size
-		tech_tree_window.size = Vector2(600, 400)
-		tech_tree_window.position = Vector2(screen_size.x - tech_tree_window.size.x - 40, (screen_size.y - tech_tree_window.size.y) / 2)
+		tech_tree_panel.size = Vector2(600, 400)
+		tech_tree_panel.position = Vector2(screen_size.x - tech_tree_panel.size.x - 40, (screen_size.y - tech_tree_panel.size.y) / 2)
 		tech_tree_toggle.position = Vector2(0, (screen_size.y - tech_tree_toggle.size.y) / 2)
 		tech_tree_toggle.pressed.connect(func():
-			tech_tree_window.visible = not tech_tree_window.visible
+			tech_tree_panel.visible = not tech_tree_panel.visible
+			if tech_tree_panel.visible:
+				bring_ui_to_front(tech_tree_panel)
 			if tech_tree:
 				if ui_config.has("tech_tree_configs"):
 					tech_tree.update_tech_buttons(ui_config["tech_tree_configs"])
-				tech_tree.set_tree_visible(tech_tree_window.visible)
+				tech_tree.set_tree_visible(tech_tree_panel.visible)
 		)
 
 func _process(delta: float) -> void:
