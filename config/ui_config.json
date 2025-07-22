@@ -28,6 +28,7 @@
 	"shop_configs": {
 		"Stone Age": {
 			"manpower": {
+				"display_order": 1,
 				"cost_key": "effort",
 				"cost_amount": 8,
 				"reward_key": "manpower",
@@ -40,6 +41,7 @@
 				"button_color": "#A0522D"
 			},
 			"thinkers": {
+				"display_order": 2,
 				"cost_key": "effort",
 				"cost_amount": 45,
 				"reward_key": "think",
@@ -52,6 +54,7 @@
 				"button_color": "#197278"
 			},
 			"fire": {
+				"display_order": 3,
 				"cost_key": "effort",
 				"cost_amount": 100,
 				"cost_scale": 1.75,
@@ -67,6 +70,7 @@
 				"button_color": "#C44536"
 			},
 			"stone_tools": {
+				"display_order": 4,
 				"cost_key": "effort",
 				"cost_amount": 250,
 				"cost_scale": 1.5,
@@ -82,6 +86,7 @@
 				"button_color": "#283D3B"
 			},
 			"basic_automation": {
+				"display_order": 5,
 				"cost_key": "effort",
 				"cost_amount": 300,
 				"cost_scale": 2.0,
@@ -96,6 +101,7 @@
 				"button_color": "#0091AD"
 			},
 			"advance_bronze_age": {
+				"display_order": 6,
 				"button_label": "advance_bronze_age",
 				"cost_key": "effort",
 				"cost_amount": 1500,
@@ -110,6 +116,7 @@
 		},
 		"Bronze Age": {
 			"bronze_smelting": {
+				"display_order": 1,
 				"cost_key": "effort",
 				"cost_amount": 500,
 				"reward_key": "materials",
@@ -127,6 +134,7 @@
 				"tooltip": "Smelt bronze from copper and tin. Produces 1 material per purchase. Scaling: log(log(log(x)))."
 			},
 			"large_foundry": {
+				"display_order": 2,
 				"cost_key": "materials",
 				"cost_amount": 10,
 				"button_label": "Large Foundry",
@@ -140,6 +148,7 @@
 				"tooltip": "Boosts manpower productivity by 50%. Requires Bronze Alloying."
 			},
 			"laborers": {
+				"display_order": 3,
 				"cost_key": "effort",
 				"cost_amount": 120,
 				"reward_key": "manpower",
@@ -154,6 +163,7 @@
 				"unlock_amount": 100
 			},
 			"wheel": {
+				"display_order": 4,
 				"cost_key": "effort",
 				"cost_amount": 800,
 				"reward_key": "think",
@@ -168,6 +178,7 @@
 				"unlock_amount": 700
 			},
 			"bronze_weapons": {
+				"display_order": 5,
 				"cost_key": "materials",
 				"cost_amount": 3,
 				"effect": "increase_click_bonus",
@@ -181,6 +192,7 @@
 				"unlock_amount": 2
 			},
 			"advance_iron_age": {
+				"display_order": 6,
 				"button_label": "Advance to Iron Age",
 				"cost_key": "effort",
 				"cost_amount": 10000,
@@ -199,6 +211,7 @@
 		},
 		"Iron Age": {
 			"iron_laborers": {
+				"display_order": 1,
 				"cost_key": "effort",
 				"cost_amount": 500,
 				"reward_key": "manpower",
@@ -216,12 +229,14 @@
 	"tech_tree_configs": [
 		{
 			"tech_label": "Unlock Fire",
+			"age": "Stone Age",
 			"cost_key": "effort",
 			"cost_amount": 100,
 			"unlocks": "Fire Upgrade"
 		},
 		{
 			"tech_label": "Unlock Stone Tools",
+			"age": "Stone Age",
 			"cost_key": "effort",
 			"cost_amount": 200,
 			"unlocks": "Stone Tools",
@@ -229,6 +244,7 @@
 		},
 		{
 			"tech_label": "Copper Extraction",
+			"age": "Bronze Age",
 			"cost_key": "effort",
 			"cost_amount": 350,
 			"unlocks": null,
@@ -237,6 +253,7 @@
 		},
 		{
 			"tech_label": "Tin Extraction",
+			"age": "Bronze Age",
 			"cost_key": "effort",
 			"cost_amount": 350,
 			"unlocks": null,
@@ -245,12 +262,56 @@
 		},
 		{
 			"tech_label": "Bronze Alloying",
+			"age": "Bronze Age",
 			"cost_key": "effort",
 			"cost_amount": 600,
 			"unlocks": "Bronze Smelting",
 			"requires": ["Copper Extraction", "Tin Extraction"],
 			"tooltip": "Combine copper and tin to unlock bronze production. Required for Bronze Smelting.",
 			"button_color": "#CD7F32"
+		},
+		{
+			"tech_label": "Iron Smelting",
+			"age": "Iron Age",
+			"cost_key": "effort",
+			"cost_amount": 2000,
+			"unlocks": "Iron Production",
+			"tooltip": "Unlocks the ability to smelt iron ore into iron."
+		},
+		{
+			"tech_label": "Steel Working",
+			"age": "Iron Age",
+			"cost_key": "effort",
+			"cost_amount": 3500,
+			"requires": "Iron Smelting",
+			"unlocks": "Steel Tools",
+			"tooltip": "Unlocks steel tools for greater efficiency."
+		},
+		{
+			"tech_label": "Crop Rotation",
+			"age": "Iron Age",
+			"cost_key": "think",
+			"cost_amount": 800,
+			"unlocks": null,
+			"tooltip": "Boosts manpower productivity by improving agriculture."
+		},
+		{
+			"tech_label": "Iron Weapons",
+			"age": "Iron Age",
+			"cost_key": "materials",
+			"cost_amount": 20,
+			"requires": "Iron Smelting",
+			"unlocks": null,
+			"tooltip": "Unlocks iron weapons, increasing click bonus."
+		},
+		{
+			"tech_label": "Road Building",
+			"age": "Iron Age",
+			"cost_key": "effort",
+			"cost_amount": 2500,
+			"requires": "Crop Rotation",
+			"unlocks": null,
+			"tooltip": "Unlocks road building, improving resource transport."
 		}
 	]
 }

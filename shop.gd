@@ -21,6 +21,9 @@ const COLOR_LOCKED = Color(0.2, 0.2, 0.2)       # Darker gray for locked
 # Debug constants
 const DEBUG_FIRE_UPGRADE_KEY = "Fire Upgrade"
 
+# Add this constant at the top with other button/layout constants
+const SHOP_ROW_OFFSET = 16  # Vertical offset between shop rows (can be overridden by JSON)
+
 # ===== VARIABLES =====
 var current_age: String = "Stone Age"
 var buttons := []
@@ -299,6 +302,10 @@ func handle_button_press(config: Dictionary, button: Button):
 		print("Not enough ", cost_key, " to buy!")
 		return
 
+	# After any purchase, refresh tech tree visibility
+	if main_node.tech_tree and main_node.ui_config and main_node.ui_config.has("tech_tree_configs"):
+		main_node.tech_tree.update_tech_buttons(main_node.ui_config["tech_tree_configs"])
+
 func update_button_properties(button: Button, config: Dictionary):
 	if not button:
 		print("ERROR: Cannot update properties of null button!")
@@ -406,32 +413,18 @@ func update_buttons(config_list: Array):
 					if tech_config["config"]["unlocks"] == key:  # This tech unlocks our button
 						if not tech_config.get("purchased", false):
 							tech_locked = true
-							if key == DEBUG_FIRE_UPGRADE_KEY:
-								print("DEBUG: Fire Upgrade tech_locked = true (tech '", tech_key, "' not purchased)")
 						break
-		else:
-			if key == DEBUG_FIRE_UPGRADE_KEY:
-				print("DEBUG: Fire Upgrade - tech_tree is null!")
 
 		# Check if one-time upgrade is already purchased
 		var local_config = btn_data.get("config", {})
 		if local_config.get("one_time", false) and local_config.get("purchased", false):
 			tech_locked = true
-			if key == DEBUG_FIRE_UPGRADE_KEY:
-				print("DEBUG: Fire Upgrade tech_locked = true (already purchased)")
-
+			
 		var should_disable = (tech_locked or not btn_data["unlocked"])
-		if key == DEBUG_FIRE_UPGRADE_KEY:
-			print("DEBUG: Fire Upgrade - tech_locked:", tech_locked, "unlocked:", btn_data["unlocked"], "should_disable:", should_disable)
 		
 		if b.disabled != should_disable:
 			b.disabled = should_disable
-			if key == DEBUG_FIRE_UPGRADE_KEY:
-				if should_disable:
-					print("DEBUG: Fire Upgrade disabled due to unlock conditions or tech lock (state change)")
-				else:
-					print("DEBUG: Fire Upgrade enabled (state change)")
-
+				
 	position_buttons()
 
 func position_buttons():
@@ -439,11 +432,13 @@ func position_buttons():
 	var start_y = ProjectSettings.get_setting("display/window/size/viewport_height") - DEFAULT_START_Y_OFFSET
 	var spacing_x = DEFAULT_SPACING_X
 	var spacing_y = DEFAULT_SPACING_Y
+	var row_offset = SHOP_ROW_OFFSET
 
 	if main_node.ui_config.has("global_ui"):
 		start_x = main_node.ui_config["global_ui"].get("start_x", start_x)
 		start_y = main_node.ui_config["global_ui"].get("start_y", start_y)
 		spacing_x = main_node.ui_config["global_ui"].get("button_spacing_x", spacing_x)
+		row_offset = main_node.ui_config["global_ui"].get("shop_row_offset", row_offset)
 
 	var age_key = current_age + "_ui"
 	if main_node.ui_config.has(age_key):
@@ -451,18 +446,50 @@ func position_buttons():
 		start_x = age_conf.get("start_x", start_x)
 		start_y = age_conf.get("start_y", start_y)
 		spacing_x = age_conf.get("button_spacing_x", spacing_x)
+		row_offset = age_conf.get("shop_row_offset", row_offset)
 
-	var current_x = start_x
-
+	# --- Sort buttons by display_order ---
+	var button_list = []
 	for value in button_dict.values():
+		if value.has("config") and value["config"].has("display_order"):
+			button_list.append(value)
+		else:
+			button_list.append(value) # fallback for buttons without display_order
+	button_list.sort_custom(func(a, b):
+		return int(a["config"].get("display_order", 999)) < int(b["config"].get("display_order", 999))
+	)
+
+	# --- 2-row layout ---
+	var max_top_row = 5
+	var top_y = start_y
+	var current_x_top = start_x
+	var current_x_bottom = start_x
+
+	# First, determine the tallest button in the top row
+	var max_top_row_height = DEFAULT_BUTTON_HEIGHT
+	for i in range(min(max_top_row, button_list.size())):
+		var value = button_list[i]
+		var config = value["config"]
+		var height = config.get("button_height", DEFAULT_BUTTON_HEIGHT)
+		if height > max_top_row_height:
+			max_top_row_height = height
+
+	var bottom_y = top_y + max_top_row_height + row_offset
+
+	for i in range(button_list.size()):
+		var value = button_list[i]
 		var button = value["button"]
 		var config = value["config"]
 		var width = config.get("button_width", DEFAULT_BUTTON_WIDTH)
 		var height = config.get("button_height", DEFAULT_BUTTON_HEIGHT)
 
-		button.position = Vector2(current_x, start_y)
+		if i < max_top_row:
+			button.position = Vector2(current_x_top, top_y)
+			current_x_top += width + spacing_x
+		else:
+			button.position = Vector2(current_x_bottom, bottom_y)
+			current_x_bottom += width + spacing_x
 		button.size = Vector2(width, height)
-		current_x += width + spacing_x
 
 func transition_to_age(new_age: String):
 	if new_age != current_age:

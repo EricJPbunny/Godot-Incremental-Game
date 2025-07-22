@@ -31,7 +31,28 @@ func set_tree_visible(visible: bool):
 		if b:
 			b.visible = visible
 
-# In add_tech_button, parent to TechTreeWindow if it exists
+# Helper: Get the color for a tech button based on config and state
+func get_tech_button_color(config: Dictionary, purchased: bool, available: bool, locked: bool) -> Color:
+	var label = config.get("tech_label", "").to_lower()
+	if purchased:
+		return COLOR_PURCHASED
+	if locked:
+		return COLOR_LOCKED
+	if available:
+		if label.find("fire") != -1:
+			return Color(0.8, 0.2, 0.1) # red
+		elif label.find("tool") != -1:
+			return Color(0.4, 0.4, 0.4) # gray
+		elif label.find("bronze") != -1:
+			return Color(0.8, 0.5, 0.2) # bronze
+		elif label.find("tin") != -1:
+			return Color(0.7, 0.7, 0.8) # tin/silver
+		elif label.find("copper") != -1:
+			return Color(0.8, 0.4, 0.2) # copper
+		else:
+			return COLOR_AVAILABLE
+	return COLOR_AVAILABLE
+
 func add_tech_button(button: Button, config: Dictionary):
 	if not button:
 		print("ERROR: Cannot add null tech button!")
@@ -52,21 +73,9 @@ func add_tech_button(button: Button, config: Dictionary):
 	# Set initial text
 	button.text = config.get("tech_label", "Tech")
 
-	# Color by vibe (placeholder logic)
+	# Color by vibe and state
 	var style = StyleBoxFlat.new()
-	var label = config.get("tech_label", "").to_lower()
-	if label.find("fire") != -1:
-		style.bg_color = Color(0.8, 0.2, 0.1) # red
-	elif label.find("tool") != -1:
-		style.bg_color = Color(0.4, 0.4, 0.4) # gray
-	elif label.find("bronze") != -1:
-		style.bg_color = Color(0.8, 0.5, 0.2) # bronze
-	elif label.find("tin") != -1:
-		style.bg_color = Color(0.7, 0.7, 0.8) # tin/silver
-	elif label.find("copper") != -1:
-		style.bg_color = Color(0.8, 0.4, 0.2) # copper
-	else:
-		style.bg_color = COLOR_AVAILABLE
+	style.bg_color = get_tech_button_color(config, false, true, false)
 	button.add_theme_stylebox_override("normal", style)
 
 	button.disabled = false
@@ -76,17 +85,11 @@ func add_tech_button(button: Button, config: Dictionary):
 	if config.has("unlocks") and config["unlocks"] != null:
 		unlocks_val = str(config["unlocks"])
 	var tooltip = ""
-	if unlocks_val != "":
+	if unlocks_val != "" and unlocks_val != "unknown":
 		tooltip += "Unlocks: " + unlocks_val + "\n"
 	tooltip += "Cost: " + str(config.get("cost_amount", 0)) + " " + config.get("cost_key", "")
 	if config.has("requires"):
-		var reqs = config["requires"]
-		if typeof(reqs) == TYPE_ARRAY:
-			tooltip += "\nRequires: " + ", ".join(reqs)
-		else:
-			tooltip += "\nRequires: " + str(reqs)
-	if config.has("tooltip"):
-		tooltip += "\n" + str(config["tooltip"])
+		tooltip += "\nRequires: " + str(config["requires"])
 	button.tooltip_text = tooltip
 
 	# Connect
@@ -99,7 +102,7 @@ func update_tech_button_properties(button: Button, config: Dictionary):
 	if not config:
 		print("ERROR: Cannot update tech button with null config!")
 		return
-		
+	
 	# Update text
 	button.text = config.get("tech_label", "Tech")
 	
@@ -117,26 +120,30 @@ func update_tech_button_properties(button: Button, config: Dictionary):
 				prerequisites_met = false
 	
 	# Update tooltip
-	var tooltip = "Unlocks: " + config.get("unlocks", "unknown")
-	tooltip += "\nCost: " + str(config.get("cost_amount", 0)) + " " + config.get("cost_key", "")
+	var unlocks_val = ""
+	if config.has("unlocks") and config["unlocks"] != null:
+		unlocks_val = str(config["unlocks"])
+	var tooltip = ""
+	if unlocks_val != "" and unlocks_val != "unknown":
+		tooltip += "Unlocks: " + unlocks_val + "\n"
+	tooltip += "Cost: " + str(config.get("cost_amount", 0)) + " " + config.get("cost_key", "")
 	if config.has("requires"):
-		tooltip += "\nRequires: " + config["requires"]
+		tooltip += "\nRequires: " + str(config["requires"])
 	button.tooltip_text = tooltip
 	
 	# Update style based on purchase state and prerequisites
 	var style = StyleBoxFlat.new()
 	var key = config.get("tech_label", "unknown")
-	if tech_config_state.get(key, {}).get("purchased", false):
-		style.bg_color = COLOR_PURCHASED  # Green for purchased
+	var purchased = tech_config_state.get(key, {}).get("purchased", false)
+	var available = prerequisites_met and not purchased
+	var locked = not prerequisites_met and not purchased
+	style.bg_color = get_tech_button_color(config, purchased, available, locked)
+	button.add_theme_stylebox_override("normal", style)
+
+	if purchased:
 		button.disabled = true
 	else:
-		if prerequisites_met:
-			style.bg_color = COLOR_AVAILABLE  # Gray for available
-			button.disabled = false
-		else:
-			style.bg_color = COLOR_LOCKED  # Darker gray for locked
-			button.disabled = true
-	button.add_theme_stylebox_override("normal", style)
+		button.disabled = not available
 
 func handle_tech_press(config: Dictionary, button: Button):
 	if not config:
@@ -199,6 +206,10 @@ func handle_tech_press(config: Dictionary, button: Button):
 	style.bg_color = COLOR_PURCHASED
 	button.add_theme_stylebox_override("normal", style)
 
+	# Refresh tech tree visibility after purchase
+	if main_node and main_node.ui_config and main_node.ui_config.has("tech_tree_configs"):
+		update_tech_buttons(main_node.ui_config["tech_tree_configs"])
+
 	# Unlock shop button
 	if config.has("unlocks") and config["unlocks"] != null and str(config["unlocks"]).strip_edges() != "":
 		var unlock_key = str(config["unlocks"])
@@ -215,6 +226,39 @@ func handle_tech_press(config: Dictionary, button: Button):
 				print("WARNING: Invalid shop button data for key: ", unlock_key)
 		else:
 			print("WARNING: Shop button not found for unlock key: ", unlock_key)
+
+# Utility: Check if all dependencies for a tech are unlocked
+func _are_dependencies_unlocked(config: Dictionary) -> bool:
+	if config.has("requires"):
+		var reqs = config["requires"]
+		if typeof(reqs) == TYPE_ARRAY:
+			for req in reqs:
+				if not tech_config_state.has(req) or not tech_config_state[req].get("purchased", false):
+					return false
+		else:
+			if not tech_config_state.has(reqs) or not tech_config_state[reqs].get("purchased", false):
+				return false
+	return true
+
+# Utility: Check if a tech is from the current age
+func _is_tech_in_current_age(config: Dictionary) -> bool:
+	if not main_node or not main_node.current_age:
+		print("[DEBUG] No main_node or current_age!")
+		return false
+	if config.has("age"):
+		var tech_age = str(config["age"]).to_lower()
+		var cur_age = main_node.current_age.to_lower()
+		print("[DEBUG] Tech '", config.get("tech_label", "unknown"), "' age=", tech_age, " current_age=", cur_age)
+		return tech_age == cur_age
+	var label = config.get("tech_label", "").to_lower()
+	var age = main_node.current_age.to_lower()
+	# Simple heuristic: techs with the age name in their label or tooltip are considered part of that age
+	if label.find(age) != -1:
+		return true
+	if config.has("tooltip") and str(config["tooltip"]).to_lower().find(age) != -1:
+		return true
+	# Optionally, add more robust age tagging in the future
+	return false
 
 func update_tech_buttons(config_list: Array):
 	if not config_list:
@@ -242,9 +286,24 @@ func update_tech_buttons(config_list: Array):
 				"button": null
 			}
 
-	# Second pass: create buttons and set up properties
+	# Second pass: create buttons and set up properties, but only for available techs
+	var visible_techs := []
 	for i in range(config_list.size()):
 		var config = config_list[i]
+		var key = config.get("tech_label", "unknown")
+		var in_age = _is_tech_in_current_age(config)
+		var deps_ok = _are_dependencies_unlocked(config)
+		print("[DEBUG] Tech '", key, "' in_age=", in_age, " deps_ok=", deps_ok)
+		if in_age and deps_ok:
+			visible_techs.append(config)
+	# Print visible techs using a standard loop
+	var tech_names := []
+	for c in visible_techs:
+		tech_names.append(c.get("tech_label", "unknown"))
+	print("[DEBUG] Visible techs:", tech_names)
+
+	for i in range(visible_techs.size()):
+		var config = visible_techs[i]
 		var key = config.get("tech_label", "unknown")
 		var b: Button
 		if not tech_buttons.has(key):
@@ -262,15 +321,21 @@ func update_tech_buttons(config_list: Array):
 			else:
 				print("ERROR: Tech button is null for key: ", key)
 				continue
-		# Position relative to window if parented to it
-		if b.get_parent() and b.get_parent().name == "TechTreeWindow":
-			b.position = Vector2(20, 40 + i * DEFAULT_SPACING_Y)
-		else:
-			b.position = Vector2(start_x, start_y + i * spacing_y)
+		# Always parent to TechTreeWindow if it exists
+		var win = get_node_or_null("../TechTreeWindow")
+		if win and b.get_parent() != win:
+			b.get_parent().remove_child(b)
+			win.add_child(b)
+		# Position relative to window
+		b.position = Vector2(20, 40 + i * spacing_y)
+		b.visible = true
 
-	# Hide buttons not in current config
+	# Hide buttons not in current visible techs
+	var visible_keys = []
+	for config in visible_techs:
+		visible_keys.append(config.get("tech_label", "unknown"))
 	for key in tech_buttons.keys():
-		if key not in config_keys:
+		if key not in visible_keys:
 			var button = tech_buttons[key]
 			if button:
 				button.visible = false

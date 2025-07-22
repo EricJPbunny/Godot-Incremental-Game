@@ -99,8 +99,11 @@ func update_all_labels() -> void:
 			resource_labels[key].text = "[b]" + key.capitalize() + ":[/b] " + str(resources[key]) + " (+" + effort_str + "/s)"
 		else:
 			resource_labels[key].text = "[b]" + key.capitalize() + ":[/b] " + str(resources[key])
+		# Dynamically adjust height to fit content
+		resource_labels[key].size.y = resource_labels[key].get_content_height()
 	# Finally, update total clicks label
 	resource_labels["total_clicks"].text = "[b]Total Clicks:[/b] " + str(total_clicks)
+	resource_labels["total_clicks"].size.y = resource_labels["total_clicks"].get_content_height()
 
 func _on_auto_timer_timeout() -> void:
 	if resources["manpower"] > 0:
@@ -286,6 +289,7 @@ func setup_resource_labels():
 			continue
 			
 		label.bbcode_enabled = true
+		label.autowrap_mode = true
 		label.text = "[b]" + key.capitalize() + ":[/b] 0"
 		label.size = Vector2(180, 30)
 		label.position = Vector2(label_start_x + i * label_spacing_x, label_start_y + i * label_spacing_y)
@@ -325,6 +329,8 @@ func _ready() -> void:
 		tech_tree_toggle.pressed.connect(func():
 			tech_tree_window.visible = not tech_tree_window.visible
 			if tech_tree:
+				if ui_config.has("tech_tree_configs"):
+					tech_tree.update_tech_buttons(ui_config["tech_tree_configs"])
 				tech_tree.set_tree_visible(tech_tree_window.visible)
 		)
 
