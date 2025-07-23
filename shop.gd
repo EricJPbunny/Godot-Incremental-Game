@@ -47,6 +47,17 @@ func add_hover_tooltip(button: Button, config: Dictionary):
 		tooltip_text += "\nReward: +" + str(config.get("reward_amount", 0)) + " " + config.get("reward_key", "")
 	if config.has("effect"):
 		tooltip_text += "\nEffect: " + str(config["effect"])
+	if config.get("one_time", false):
+		tooltip_text += "\n[One-time upgrade]"
+	if config.has("cost_scale"):
+		tooltip_text += "\nScaling: x" + str(config["cost_scale"])
+	if config.has("scaling_type"):
+		tooltip_text += "\nScaling type: " + str(config["scaling_type"])
+	# Not enough resource
+	if config.has("cost_key") and config.has("cost_amount") and main_node:
+		var can_afford = main_node.resources.get(config["cost_key"], 0) >= config["cost_amount"]
+		if not can_afford:
+			tooltip_text += "\n[Not enough %s]" % config["cost_key"]
 	button.tooltip_text = tooltip_text
 
 func add_button(button: Button, config: Dictionary):
@@ -124,7 +135,7 @@ func apply_button_style(button: Button, config: Dictionary):
 	if not config:
 		print("ERROR: Cannot apply style with null config!")
 		return
-		
+
 	if config.has("button_width") and config.has("button_height"):
 		var width = config["button_width"]
 		var height = config["button_height"]
@@ -132,13 +143,38 @@ func apply_button_style(button: Button, config: Dictionary):
 			button.size = Vector2(width, height)
 		else:
 			print("WARNING: Invalid button dimensions: ", width, "x", height)
-			
-	if config.has("button_color"):
-		var color_data = config["button_color"]
-		var color = parse_color(color_data)
-		var style = StyleBoxFlat.new()
-		style.bg_color = color
-		button.add_theme_stylebox_override("normal", style)
+
+	# Determine base color
+	var color_data = config.get("button_color", Color(0.3, 0.3, 0.3))
+	var color = parse_color(color_data)
+	var can_afford = true
+	if config.has("cost_key") and config.has("cost_amount") and main_node:
+		can_afford = main_node.resources.get(config["cost_key"], 0) >= config["cost_amount"]
+
+	# Disabled/gray out if can't afford
+	var disabled_color = color.linear_interpolate(Color(0.7, 0.7, 0.7), 0.6)
+	var hover_color = color.lightened(0.25)
+
+	var style_normal = StyleBoxFlat.new()
+	style_normal.bg_color = can_afford and not button.disabled ? color : disabled_color
+	button.add_theme_stylebox_override("normal", style_normal)
+
+	var style_hover = StyleBoxFlat.new()
+	style_hover.bg_color = can_afford and not button.disabled ? hover_color : disabled_color
+	button.add_theme_stylebox_override("hover", style_hover)
+
+	var style_pressed = StyleBoxFlat.new()
+	style_pressed.bg_color = can_afford and not button.disabled ? color.darkened(0.1) : disabled_color
+	button.add_theme_stylebox_override("pressed", style_pressed)
+
+	# Optionally, scale up on hover
+	button.mouse_entered.connect(func():
+		if can_afford and not button.disabled:
+			button.scale = Vector2(1.07, 1.07)
+	)
+	button.mouse_exited.connect(func():
+		button.scale = Vector2(1, 1)
+	)
 
 func handle_button_press(config: Dictionary, button: Button):
 	if not config:
