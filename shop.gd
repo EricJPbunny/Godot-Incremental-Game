@@ -152,19 +152,19 @@ func apply_button_style(button: Button, config: Dictionary):
 		can_afford = main_node.resources.get(config["cost_key"], 0) >= config["cost_amount"]
 
 	# Disabled/gray out if can't afford
-	var disabled_color = color.linear_interpolate(Color(0.7, 0.7, 0.7), 0.6)
+	var disabled_color = color.lerp(Color(0.7, 0.7, 0.7), 0.6)
 	var hover_color = color.lightened(0.25)
 
 	var style_normal = StyleBoxFlat.new()
-	style_normal.bg_color = can_afford and not button.disabled ? color : disabled_color
+	style_normal.bg_color = color if can_afford and not button.disabled else disabled_color
 	button.add_theme_stylebox_override("normal", style_normal)
 
 	var style_hover = StyleBoxFlat.new()
-	style_hover.bg_color = can_afford and not button.disabled ? hover_color : disabled_color
+	style_hover.bg_color = hover_color if can_afford and not button.disabled else disabled_color
 	button.add_theme_stylebox_override("hover", style_hover)
 
 	var style_pressed = StyleBoxFlat.new()
-	style_pressed.bg_color = can_afford and not button.disabled ? color.darkened(0.1) : disabled_color
+	style_pressed.bg_color = color.darkened(0.1) if can_afford and not button.disabled else disabled_color
 	button.add_theme_stylebox_override("pressed", style_pressed)
 
 	# Optionally, scale up on hover
