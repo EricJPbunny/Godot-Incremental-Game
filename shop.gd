@@ -98,6 +98,10 @@ func add_button(button: Button, config: Dictionary):
 			print("WARNING: Invalid cooldown_time format: ", cooldown_time)
 
 	button.pressed.connect(func(): handle_button_press(config, button))
+	if main_node and main_node.has_method("play_ui_click"):
+		button.pressed.connect(main_node.play_ui_click)
+	if main_node and main_node.has_method("play_ui_hover"):
+		button.mouse_entered.connect(main_node.play_ui_hover)
 	apply_button_style(button, config)
 	add_hover_tooltip(button, config)
 

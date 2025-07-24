@@ -33,19 +33,22 @@ const AGE_PALETTES = {
 		"background": Color(0.85, 0.72, 0.55),
 		"resource_text": Color(0.2, 0.2, 0.2),
 		"work_button": Color("#C68642"),
-		"tech_tree_window": Color(0.8, 0.8, 0.7, 0.4)
+		"tech_tree_window": Color(0.8, 0.8, 0.7, 0.4),
+		"click_sound": "res://sounds/stone_click.wav"
 	},
 	"Bronze Age": {
 		"background": Color(0.8, 0.6, 0.3),
 		"resource_text": Color(0.3, 0.2, 0.1),
 		"work_button": Color("#CD7F32"),
-		"tech_tree_window": Color(0.9, 0.8, 0.6, 0.4)
+		"tech_tree_window": Color(0.9, 0.8, 0.6, 0.4),
+		"click_sound": "res://sounds/bronze_click.wav"
 	},
 	"Iron Age": {
 		"background": Color(0.7, 0.7, 0.7),
 		"resource_text": Color(0.1, 0.1, 0.1),
 		"work_button": Color("#888888"),
-		"tech_tree_window": Color(0.7, 0.7, 0.8, 0.4)
+		"tech_tree_window": Color(0.7, 0.7, 0.8, 0.4),
+		"click_sound": "res://sounds/iron_click.wav"
 	}
 }
 
@@ -82,6 +85,9 @@ func apply_age_palette(age: String):
 	var tech_tree_bg = get_node_or_null("TechTreePanel/TechTreeBG")
 	if tech_tree_bg:
 		tech_tree_bg.color = palette["tech_tree_window"]
+	# Update click sound for this age
+	if ui_click_player and palette.has("click_sound"):
+		ui_click_player.stream = load(palette["click_sound"])
 
 # ===== VARIABLES =====
 var shop: Shop
@@ -106,6 +112,28 @@ var current_age := DEFAULT_CURRENT_AGE
 var shop_configs = {}
 var ui_config = {}
 var resource_labels = {}
+
+# ===== UI SOUND MANAGER =====
+var ui_click_player: AudioStreamPlayer
+var ui_hover_player: AudioStreamPlayer
+
+func setup_ui_sound_manager():
+	ui_click_player = AudioStreamPlayer.new()
+	ui_click_player.stream = preload("res://sounds/stone_click.wav") 
+	add_child(ui_click_player)
+	ui_hover_player = AudioStreamPlayer.new()
+	ui_hover_player.stream = preload("res://sounds/button_hover.wav") 
+	add_child(ui_hover_player)
+
+func play_ui_click():
+	if ui_click_player:
+		ui_click_player.stop()
+		ui_click_player.play()
+
+func play_ui_hover():
+	if ui_hover_player:
+		ui_hover_player.stop()
+		ui_hover_player.play()
 
 func update_age(new_age: String):
 	if not new_age or new_age.is_empty():
@@ -378,6 +406,7 @@ func _ready() -> void:
 	setup_timers()
 	setup_work_button()
 	setup_resource_labels()
+	setup_ui_sound_manager()
 
 	# Tech tree panel and toggle logic
 	var tech_tree_panel = get_node_or_null("TechTreePanel")

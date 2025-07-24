@@ -67,25 +67,22 @@ func setup_from_config(config: Dictionary):
 		else:
 			print("WARNING: Invalid cooldown_time format in work button config: ", cooldown_time)
 
-func _click_once():
+# Add a helper for resource gain
+func apply_work_reward():
 	if not main_node:
-		print("ERROR: Click ignored: no main_node")
+		print("ERROR: No main_node for work reward!")
 		return
-		
 	if not main_node.resources.has("effort"):
 		print("ERROR: Main node missing effort resource!")
 		return
-		
 	main_node.resources["effort"] += main_node.get_current_click_power()
-	print("Work pressed! Current effort:", main_node.resources["effort"])
 	main_node.total_clicks += 1
+	print("Work reward applied! Current effort:", main_node.resources["effort"])
 
 func _on_button_down():
 	if not can_click:
 		print("Click ignored: cooldown active")
 		return
-		
-	_click_once()
 	can_click = false
 	if click_cooldown_timer:
 		click_cooldown_timer.start()
@@ -103,16 +100,21 @@ func _on_hold_timer_timeout():
 	if not hold_timer or hold_timer.is_stopped():
 		return
 	if can_click and is_pressed():
-		_click_once()
-	else:
-		print("Hold ignored: either cooldown active or button not held")
+		can_click = false
+		if click_cooldown_timer:
+			click_cooldown_timer.start()
 
 func _on_cooldown_timeout():
 	can_click = true
-	print("Cooldown finished, can_click now true")
-	# Immediately retrigger autoclick if active
-	if main_node and main_node.autoclick_enabled and hold_timer and hold_timer.is_stopped():
-		hold_timer.start()
+	apply_work_reward()
+	if main_node and main_node.has_method("play_ui_click"):
+		main_node.play_ui_click()
+	# Immediately start next cooldown if button is still held and autoclick is enabled
+	if is_pressed() and main_node and main_node.autoclick_enabled:
+		can_click = false
+		if click_cooldown_timer:
+			click_cooldown_timer.start()
+	# No longer restart hold_timer here; it's managed by button down/up
 
 func set_cooldown_time(seconds: float):
 	if not click_cooldown_timer:
@@ -171,6 +173,8 @@ func _ready():
 	cooldown_bar.show_percentage = false
 	cooldown_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(cooldown_bar)
+
+	print("[DEBUG] hold_timer.wait_time=", hold_timer.wait_time, " click_cooldown_timer.wait_time=", click_cooldown_timer.wait_time)
 
 func _process(delta: float) -> void:
 	if not cooldown_bar:
