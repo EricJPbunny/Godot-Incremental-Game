@@ -88,6 +88,11 @@ func apply_age_palette(age: String):
 	# Update click sound for this age
 	if ui_click_player and palette.has("click_sound"):
 		ui_click_player.stream = load(palette["click_sound"])
+		# Lower baseline volume for iron_click
+		if palette["click_sound"].find("iron_click") != -1:
+			ui_click_player.volume_db = -18
+		else:
+			ui_click_player.volume_db = 0
 
 # ===== VARIABLES =====
 var shop: Shop
